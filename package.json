@@ -31,7 +31,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "firebase-admin": "^10.3.0",
+    "firebase-admin": "^13.1.0",
     "google-auth-library": "^9.15.1",
     "google-libphonenumber": "^3.2.40",
     "jsonwebtoken": "^8.5.1",
