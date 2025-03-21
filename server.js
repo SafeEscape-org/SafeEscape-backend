@@ -6,12 +6,12 @@ const http = require('http');
 const socketIO = require('socket.io');
 const pubSubService = require('./services/pubsub/pubSubService');
 const socketService = require('./services/socket/socketService');
-<<<<<<< HEAD
+
 const chatbotController = require('./controllers/chatbotController');
 
-=======
+
 const PushNotificationService = require('./services/notificationServices/pushNotifications/pushNotification');
->>>>>>> ebd5dce5de76b3e28ee06a13444904e3f6fd774d
+
 // Load environment variables
 dotenv.config();
 

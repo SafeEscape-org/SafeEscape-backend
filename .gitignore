@@ -91,4 +91,11 @@ config/gemini-servie-account.*.json
 config/vertexai-service-Account.json
 config/pubsub-service-account.json
 
+# Add Google Cloud service account keys
+config/google-cloud-key.json
+config/vertexai-service-Account.json
+config/firebase-serviceAccount.json
+config/gemini-servie-account.json
+config/
+
 
