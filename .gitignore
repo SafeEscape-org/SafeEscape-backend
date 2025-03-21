@@ -40,15 +40,6 @@ node_modules/
 logs/
 *.log
 coverage/
-.installed.cfg
-*.egg
-*.egg-info/
-venv/
-ENV/
-*.swp
-*.swo
-*.DS_Store
-Thumbs.db
 
 # Environment variables and secrets
 .env
@@ -66,36 +57,15 @@ logs/
 # Dependencies
 node_modules/
 
-# IDE specific files
-.idea/
-.vscode/
-*.swp
-*.swo
-*.DS_Store
-Thumbs.db
-
 # Firebase
 firebase-debug.log
 firebase-debug.*.log
 
-
-# Ignore Google Pub/Sub keys and configuration
-pubsub-service-account.json
-pubsub-service-account.*.json 
-
-# Gemini API credentials
-config/gemini-servie-account.json
-config/gemini-servie-account.*.json
-
-# Ignore service account credentials
-config/vertexai-service-Account.json
-config/pubsub-service-account.json
-
-# Add Google Cloud service account keys
+# Ignore Google Cloud service account keys
 config/google-cloud-key.json
 config/vertexai-service-Account.json
 config/firebase-serviceAccount.json
 config/gemini-servie-account.json
-config/
+config/pubsub-service-account.json
 
 
