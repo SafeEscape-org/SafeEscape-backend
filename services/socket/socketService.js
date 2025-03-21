@@ -1,92 +1,167 @@
 const socketIO = require('socket.io');
 const pubSubService = require('../pubsub/pubSubService');
+const admin = require('firebase-admin');
+const geolib = require('geolib'); // You'll need to install this: npm install geolib
 
+// Import the UserManager component
+const UserManager = require('./components/userManager');
+const NotificationHandler = require('./components/notificationHandler');
+const DisasterManager = require('./components/disasterManager');
 
 /**
  * Socket.IO service for real-time communication
  */
 const socketService = {
   io: null,
+  connectedUsers: new Map(), // Store connected users with their locations
+  userManager: null,
+  notificationHandler: null,
+  disasterManager: null,
   
   /**
    * Initialize Socket.IO server
-   * @param {Object} server - HTTP server
+   * @param {Object} io - Socket.IO instance
    */
-  initialize(server) {
-    this.io = socketIO(server, {
-      cors: {
-        origin: '*',
-        methods: ['GET', 'POST']
-      }
-    });
+  initialize(io) {
+    // Store the provided io instance
+    this.io = io;
     
-    console.log('Socket.IO initialized');
+    console.log('Socket.IO service initialized');
+    
+    // Initialize component managers
+    this.userManager = new UserManager(io, this.connectedUsers);
+    this.notificationHandler = new NotificationHandler(io, this.userManager);
+    this.disasterManager = new DisasterManager(io, this.userManager);
+    
+    // Store reference to socketService for use in callbacks
+    const self = this;
     
     // Set up connection handler
     this.io.on('connection', (socket) => {
-      console.log(`Client connected: ${socket.id}`);
+      console.log(`Client connected to socketService: ${socket.id}`);
       
-      // Handle user registration
-      socket.on('register', (userData) => {
-        this.registerUser(socket, userData);
+      // Add debug listener for all events
+      socket.onAny((eventName, ...args) => {
+        console.log(`[DEBUG] Socket ${socket.id} received event: ${eventName}`, JSON.stringify(args));
       });
       
-      // Handle disconnection
+      // Send welcome message to confirm connection
+      socket.emit('welcome', { message: 'Connected to SafeEscape server' });
+      
+      // Add a test method to verify messaging is working
+      socket.on('test-connection', (data) => {
+        console.log(`Received test-connection from ${socket.id}:`, data);
+        
+        // Send direct response
+        socket.emit('test-response', { 
+          message: 'Direct socket response',
+          timestamp: new Date().toISOString()
+        });
+        
+        // If user ID is provided, test room-based messaging
+        if (data && data.userId) {
+          self.userManager.sendToUser(data.userId, 'test-user-message', {
+            message: 'Room-based message test',
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+      
+      // Handle ping for testing
+      socket.on('ping', (data) => {
+        console.log(`Received ping from ${socket.id}:`, data);
+        socket.emit('pong', { time: new Date().toISOString() });
+      });
+      
+      // Add explicit event listeners for all expected events
+      socket.on('emergency-alert', (data) => {
+        console.log(`Received emergency-alert from ${socket.id}:`, JSON.stringify(data));
+        socket.emit('emergency-alert-received', { received: true, timestamp: new Date().toISOString() });
+      });
+      
+      socket.on('disaster-warning', (data) => {
+        console.log(`Received disaster-warning from ${socket.id}:`, JSON.stringify(data));
+        socket.emit('disaster-warning-received', { received: true, timestamp: new Date().toISOString() });
+      });
+      
+      socket.on('evacuation-notice', (data) => {
+        console.log(`Received evacuation-notice from ${socket.id}:`, JSON.stringify(data));
+        socket.emit('evacuation-notice-received', { received: true, timestamp: new Date().toISOString() });
+      });
+      
+      // Add test event to verify socket communication
+      socket.on('test-notification', () => {
+        console.log(`Received test notification request from ${socket.id}`);
+        socket.emit('test-notification-response', { 
+          success: true, 
+          message: 'Test notification received and processed',
+          timestamp: new Date().toISOString()
+        });
+      });
+      
+      // Handle user registration - use both 'register' and 'register_user' events for compatibility
+      socket.on('register', handleUserRegistration);
+      socket.on('register_user', handleUserRegistration);
+      
+      // Handle disconnect
       socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
+        self.userManager.handleDisconnect(socket);
       });
+      
+      // Function to handle user registration (used by both register events)
+      function handleUserRegistration(userData) {
+        console.log(`Register event received from ${socket.id} with data:`, JSON.stringify(userData));
+        
+        // Check if userData is a string (from alternative format test)
+        if (typeof userData === 'string') {
+          try {
+            userData = JSON.parse(userData);
+          } catch (error) {
+            console.error('Error parsing userData string:', error);
+            socket.emit('registered', {
+              success: false,
+              message: 'Invalid user data format'
+            });
+            return;
+          }
+        }
+        
+        try {
+          // Validate user data
+          if (!userData || !userData.userId) {
+            console.error('Invalid user data received:', userData);
+            socket.emit('registered', {
+              success: false,
+              message: 'Invalid user data. userId is required.'
+            });
+            return;
+          }
+          
+          // Register user with the userManager component
+          const registeredUserId = self.userManager.registerUser(socket, userData);
+          
+          // If registration was successful and we have location data, send active disasters
+          if (registeredUserId && userData.location) {
+            console.log(`Immediately sending active disasters to newly registered user ${registeredUserId}`);
+            self.disasterManager.sendActiveDisastersToUser(registeredUserId, socket.id);
+          }
+          
+          // Start disaster checks if not already running
+          self.disasterManager.startDisasterChecks();
+        } catch (error) {
+          console.error('Error registering user:', error);
+          socket.emit('registered', {
+            success: false,
+            message: 'Failed to register for real-time updates',
+            error: error.message
+          });
+        }
+      }
     });
     
     // Subscribe to Pub/Sub topics
     this.setupPubSubSubscriptions();
-  },
-  
-  /**
-   * Register a user for real-time updates
-   * @param {Object} socket - Socket.IO socket
-   * @param {Object} userData - User data
-   */
-  registerUser(socket, userData) {
-    try {
-      console.log(`Registering user: ${userData.userId}`);
-      
-      // Store user data in socket
-      socket.userData = userData;
-      
-      // Join user-specific room
-      socket.join(`user-${userData.userId}`);
-      
-      // Join location-based rooms
-      if (userData.location) {
-        const city = userData.location.city?.toLowerCase();
-        const state = userData.location.state?.toLowerCase();
-        
-        if (city) {
-          socket.join(`city-${city}`);
-          console.log(`User joined room: city-${city}`);
-        }
-        if (state) {
-          socket.join(`state-${state}`);
-          console.log(`User joined room: state-${state}`);
-        }
-        
-        // Join country room
-        socket.join('country-india');
-        console.log(`User joined room: country-india`);
-      }
-      
-      // Confirm registration
-      socket.emit('registered', {
-        success: true,
-        message: 'Successfully registered for real-time updates'
-      });
-    } catch (error) {
-      console.error('Error registering user:', error);
-      socket.emit('registered', {
-        success: false,
-        message: 'Failed to register for real-time updates'
-      });
-    }
   },
   
   /**
@@ -98,190 +173,26 @@ const socketService = {
     // Subscribe to emergency alerts
     pubSubService.subscribeToTopic(
       subscriptions.EMERGENCY_ALERTS_SUB,
-      (data, attributes) => this.handleEmergencyAlert(data, attributes)
+      (data, attributes) => this.notificationHandler.handleEmergencyAlert(data, attributes)
     );
     
     // Subscribe to disaster warnings
     pubSubService.subscribeToTopic(
       subscriptions.DISASTER_WARNINGS_SUB,
-      (data, attributes) => this.handleDisasterWarning(data, attributes)
+      (data, attributes) => this.notificationHandler.handleDisasterWarning(data, attributes)
     );
     
     // Subscribe to evacuation notices
     pubSubService.subscribeToTopic(
       subscriptions.EVACUATION_NOTICES_SUB,
-      (data, attributes) => this.handleEvacuationNotice(data, attributes)
+      (data, attributes) => this.notificationHandler.handleEvacuationNotice(data, attributes)
     );
     
     // Subscribe to system notifications
     pubSubService.subscribeToTopic(
       subscriptions.SYSTEM_NOTIFICATIONS_SUB,
-      (data, attributes) => this.handleSystemNotification(data, attributes)
+      (data, attributes) => this.notificationHandler.handleSystemNotification(data, attributes)
     );
-  },
-  
-  /**
-   * Handle emergency alert
-   * @param {Object} data - Alert data
-   * @param {Object} attributes - Message attributes
-   */
-  handleEmergencyAlert(data, attributes) {
-    console.log('Received emergency alert:', data.id || 'unknown');
-    console.log('Alert data:', JSON.stringify(data));
-    console.log('Alert attributes:', JSON.stringify(attributes));
-    
-    // Broadcast to all clients for testing
-    this.io.emit('emergency-alert', {
-      alert: data,
-      attributes: attributes
-    });
-    
-    // Determine target rooms based on location
-    if (data.location) {
-      const targetRooms = this.getTargetRooms(data.location, attributes.region);
-      console.log('Broadcasting to rooms:', targetRooms);
-      
-      // Broadcast to target rooms
-      targetRooms.forEach(room => {
-        this.io.to(room).emit('emergency-alert', {
-          alert: data,
-          attributes: attributes
-        });
-      });
-    }
-    
-    // Broadcast to all clients for critical alerts
-    if (attributes.severity === 'critical') {
-      this.io.emit('critical-alert', {
-        alert: data,
-        attributes: attributes
-      });
-    }
-  },
-  
-  /**
-   * Handle disaster warning
-   * @param {Object} data - Warning data
-   * @param {Object} attributes - Message attributes
-   */
-  handleDisasterWarning(data, attributes) {
-    console.log('Received disaster warning:', data.id || 'unknown');
-    
-    // Broadcast to all clients for testing
-    this.io.emit('disaster-warning', {
-      warning: data,
-      attributes: attributes
-    });
-    
-    // Determine target rooms based on location
-    if (data.location) {
-      const targetRooms = this.getTargetRooms(data.location, attributes.region);
-      
-      // Broadcast to target rooms
-      targetRooms.forEach(room => {
-        this.io.to(room).emit('disaster-warning', {
-          warning: data,
-          attributes: attributes
-        });
-      });
-    }
-  },
-  
-  /**
-   * Handle evacuation notice
-   * @param {Object} data - Notice data
-   * @param {Object} attributes - Message attributes
-   */
-  handleEvacuationNotice(data, attributes) {
-    console.log('Received evacuation notice:', data.id || 'unknown');
-    
-    // Broadcast to all clients for testing
-    this.io.emit('evacuation-notice', {
-      notice: data,
-      attributes: attributes
-    });
-    
-    // Determine target rooms based on location
-    if (data.area) {
-      const targetRooms = this.getTargetRooms(data.area, attributes.region);
-      
-      // Broadcast to target rooms
-      targetRooms.forEach(room => {
-        this.io.to(room).emit('evacuation-notice', {
-          notice: data,
-          attributes: attributes
-        });
-      });
-    }
-    
-    // Broadcast to all clients for critical evacuations
-    if (attributes.severity === 'critical') {
-      this.io.emit('critical-evacuation', {
-        notice: data,
-        attributes: attributes
-      });
-    }
-  },
-  
-  /**
-   * Handle system notification
-   * @param {Object} data - Notification data
-   * @param {Object} attributes - Message attributes
-   */
-  handleSystemNotification(data, attributes) {
-    console.log('Received system notification:', data.id || 'unknown');
-    
-    // Broadcast to all clients
-    this.io.emit('system-notification', {
-      notification: data,
-      attributes: attributes
-    });
-  },
-  
-  /**
-   * Get target rooms based on location
-   * @param {Object} location - Location data
-   * @param {string} region - Region string
-   * @returns {Array} List of room names
-   */
-  getTargetRooms(location, region) {
-    const rooms = [];
-    
-    // Add country room
-    rooms.push('country-india');
-    
-    // Add state room if available
-    if (location && location.state) {
-      rooms.push(`state-${location.state.toLowerCase()}`);
-    }
-    
-    // Add city room if available
-    if (location && location.city) {
-      rooms.push(`city-${location.city.toLowerCase()}`);
-    }
-    
-    // Add region room if specified
-    if (region && region !== 'all') {
-      const regionParts = region.split(',');
-      if (regionParts.length > 0) {
-        rooms.push(`city-${regionParts[0].toLowerCase()}`);
-      }
-      if (regionParts.length > 1) {
-        rooms.push(`state-${regionParts[1].toLowerCase()}`);
-      }
-    }
-    
-    return rooms;
-  },
-  
-  /**
-   * Send a direct message to a specific user
-   * @param {string} userId - User ID
-   * @param {string} event - Event name
-   * @param {Object} data - Message data
-   */
-  sendToUser(userId, event, data) {
-    this.io.to(`user-${userId}`).emit(event, data);
   },
   
   /**
@@ -291,8 +202,22 @@ const socketService = {
    */
   broadcast(event, data) {
     this.io.emit(event, data);
+  },
+  
+  /**
+   * Send a message to a specific user
+   * @param {string} userId - User ID
+   * @param {string} event - Event name
+   * @param {Object} data - Message data
+   */
+  sendToUser(userId, event, data) {
+    if (this.userManager) {
+      this.userManager.sendToUser(userId, event, data);
+    } else {
+      console.error('UserManager not initialized');
+      this.io.to(`user-${userId}`).emit(event, data);
+    }
   }
 };
 
-
-module.exports = socketService; 
+module.exports = socketService;
