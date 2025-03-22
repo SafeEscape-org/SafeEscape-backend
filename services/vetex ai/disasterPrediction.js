@@ -9,11 +9,23 @@ const vertexAI = new VertexAI({
   location: process.env.VERTEX_AI_LOCATION || 'us-central1',
 });
 
-const predictionModel = vertexAI.getGenerativeModel({
-  model: 'gemini-pro',
+// Initialize different models for different disaster prediction tasks
+const geminiPro = vertexAI.getGenerativeModel({
+  model: 'gemini-1.5-pro', // Upgraded to Gemini 1.5 Pro 
   generation_config: {
     max_output_tokens: 1024,
     temperature: 0.2,
+    top_p: 0.95,
+    top_k: 40
+  }
+});
+
+// For image analysis of disaster areas (satellite images, user photos)
+const imageAnalysisModel = vertexAI.getGenerativeModel({
+  model: 'gemini-1.5-pro-vision',
+  generation_config: {
+    max_output_tokens: 1024,
+    temperature: 0.1,
     top_p: 0.95,
     top_k: 40
   }
@@ -91,10 +103,125 @@ const disasterPredictionService = {
           "overallRiskLevel": "Low/Medium/High/Extreme",
           "validityPeriod": "72 hours from now"
         }
-      `
+      `;
+      
+      // Generate prediction using Gemini 1.5 Pro
+      const result = await geminiPro.generateContent(prompt);
+      const responseText = result.response.text();
+      
+      try {
+        // Parse the JSON response
+        return JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Error parsing model response:', parseError);
+        // Fall back to text extraction if JSON parsing fails
+        return this.extractStructuredData(responseText);
+      }
     } catch (error) {
-      // Default values if anything fails
+      console.error('Prediction error:', error);
+      // Return default risk assessment
+      return this.getDefaultRiskAssessment(location);
     }
+  },
+
+  async analyzeSatelliteImage(imageUrl, location) {
+    try {
+      // This method would analyze satellite images for disaster prediction
+      const prompt = `
+        Analyze this satellite image of ${location.city || 'Unknown'}, ${location.state || 'Unknown'}.
+        Identify any visible signs of:
+        1. Flooding or water accumulation
+        2. Fire or smoke
+        3. Storm damage
+        4. Landslides or soil erosion
+        5. Other potential hazards
+
+        Format your response as JSON with this structure:
+        {
+          "detectedHazards": [
+            {
+              "hazardType": "type of hazard",
+              "confidence": "Low/Medium/High",
+              "location": "description of location in image",
+              "recommendations": ["recommendation1", "recommendation2"]
+            }
+          ],
+          "overallAssessment": "description of the overall situation"
+        }
+      `;
+
+      const imageContent = {
+        inlineData: {
+          data: Buffer.from(imageUrl).toString('base64'),
+          mimeType: 'image/jpeg',
+        },
+      };
+
+      const result = await imageAnalysisModel.generateContent([prompt, imageContent]);
+      return JSON.parse(result.response.text());
+    } catch (error) {
+      console.error('Image analysis error:', error);
+      return {
+        detectedHazards: [],
+        overallAssessment: "Unable to analyze image due to technical issues."
+      };
+    }
+  },
+
+  extractStructuredData(text) {
+    // Fallback method to extract structured data from text if JSON parsing fails
+    // Implementation would depend on the expected format
+    // This is a simple placeholder
+    return {
+      risks: [
+        {
+          disasterType: "Unknown",
+          riskLevel: "Medium",
+          indicators: ["AI response formatting error"],
+          precautions: ["Monitor official emergency channels"]
+        }
+      ],
+      overallRiskLevel: "Medium",
+      validityPeriod: "72 hours from now"
+    };
+  },
+
+  getDefaultRiskAssessment(location) {
+    // Provide default risk assessment based on location and season
+    const currentMonth = new Date().getMonth();
+    const city = location.city || 'Unknown';
+    let defaultAssessment = {
+      risks: [],
+      overallRiskLevel: "Low",
+      validityPeriod: "72 hours from now"
+    };
+
+    // Basic seasonal risks for India
+    if (currentMonth >= 5 && currentMonth <= 8) { // June-September: Monsoon
+      defaultAssessment.risks.push({
+        disasterType: "Flood",
+        riskLevel: "Medium",
+        indicators: ["Monsoon season", "Historical flood patterns"],
+        precautions: ["Avoid low-lying areas", "Keep emergency supplies ready"]
+      });
+    } else if (currentMonth >= 2 && currentMonth <= 4) { // March-May: Summer
+      defaultAssessment.risks.push({
+        disasterType: "Heatwave",
+        riskLevel: "Medium",
+        indicators: ["Summer season", "Historical temperature patterns"],
+        precautions: ["Stay hydrated", "Avoid outdoor activities during peak heat"]
+      });
+    }
+
+    // Add a generic risk
+    defaultAssessment.risks.push({
+      disasterType: "General Emergency",
+      riskLevel: "Low",
+      indicators: ["Standard preparedness"],
+      precautions: ["Stay informed via local news", "Keep emergency contacts handy"]
+    });
+
+    return defaultAssessment;
   },
 
   async getCurrentConditions(location) {

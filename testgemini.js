@@ -1,35 +1,30 @@
-const axios = require("axios");
-require("dotenv").config();
+// Load environment variables
+require('dotenv').config();
 
-async function testGeminiAPI() {
-    // Get API key from environment variable
-    const apiKey = process.env.GEMINI_API_KEY;
-    
-    if (!apiKey) {
-        console.error("❌ GEMINI_API_KEY not found in environment variables");
-        return;
-    }
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.0-pro:generateContent?key=${apiKey}`;
-    const headers = {
-        "Content-Type": "application/json",
-    };
+// Get API key from environment variables
+const apiKey = process.env.GEMINI_API_KEY;
 
-    const requestData = {
-        contents: [
-            {
-                role: "user",
-                parts: [{ text: "What to do in case of an earthquake?" }]
-            }
-        ]
-    };
-
-    try {
-        const response = await axios.post(apiUrl, requestData, { headers });
-        console.log("✅ Gemini API Response:", JSON.stringify(response.data, null, 2));
-    } catch (error) {
-        console.error("❌ Error calling Gemini API:", error.response?.data || error.message);
-    }
+// Check if API key is available
+if (!apiKey) {
+  console.error("Error: GEMINI_API_KEY environment variable is not set");
+  console.error("Please add GEMINI_API_KEY to your .env file");
+  process.exit(1);
 }
 
-testGeminiAPI();
+const genAI = new GoogleGenerativeAI(apiKey);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+const prompt = "Explain how AI works";
+
+async function runAI() {
+  try {
+    const result = await model.generateContent(prompt);
+    console.log(result.response.text());
+  } catch (error) {
+    console.error("Error:", error.message);
+  }
+}
+
+runAI();

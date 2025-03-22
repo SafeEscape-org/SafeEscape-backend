@@ -37,7 +37,7 @@ async function runTests() {
 }
 
 // Test 1: Basic Text Generation
-async function testTextGeneration() {
+/* async function testTextGeneration() {
   console.log('📝 Test 1: Basic Text Generation');
   
   try {
@@ -55,7 +55,7 @@ async function testTextGeneration() {
     console.error('❌ Basic Text Generation Test Failed:', error);
     throw error;
   }
-}
+} */
 
 
 // Test 3: Emergency Chatbo

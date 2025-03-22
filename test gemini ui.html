@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeEscape Emergency Chatbot Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #chat-container { border: 1px solid #ccc; height: 400px; overflow-y: auto; padding: 10px; margin-bottom: 10px; }
+        .message { margin-bottom: 10px; padding: 8px 12px; border-radius: 18px; max-width: 70%; }
+        .user-message { background-color: #DCF8C6; align-self: flex-end; margin-left: auto; }
+        .bot-message { background-color: #F1F0F0; }
+        .message-container { display: flex; margin-bottom: 10px; }
+        #message-form { display: flex; }
+        #message-input { flex-grow: 1; padding: 8px; }
+        button { padding: 8px 16px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        #emergency-form { margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px; }
+        label { display: block; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <h1>SafeEscape Emergency Chatbot</h1>
+    
+    <div id="emergency-form">
+        <h2>Start Emergency Chat</h2>
+        <form id="start-chat-form">
+            <div>
+                <label for="emergency-type">Emergency Type:</label>
+                <select id="emergency-type">
+                    <option value="earthquake">Earthquake</option>
+                    <option value="flood">Flood</option>
+                    <option value="fire">Fire</option>
+                    <option value="medical">Medical Emergency</option>
+                    <option value="hurricane">Hurricane</option>
+                    <option value="general">General Emergency</option>
+                </select>
+            </div>
+            <div>
+                <label for="location">Your Location:</label>
+                <input type="text" id="location" placeholder="City, State">
+            </div>
+            <button type="submit">Start Emergency Chat</button>
+        </form>
+    </div>
+    
+    <div id="chat-interface" style="display: none;">
+        <div id="chat-container"></div>
+        <form id="message-form">
+            <input type="text" id="message-input" placeholder="Type your message here...">
+            <button type="submit">Send</button>
+        </form>
+        <button id="end-chat-btn" style="margin-top: 10px; background-color: #f44336;">End Chat</button>
+    </div>
+
+    <script>
+        let sessionId = null;
+        
+        document.getElementById('start-chat-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const emergencyType = document.getElementById('emergency-type').value;
+            const location = document.getElementById('location').value;
+            
+            try {
+                const response = await fetch('/api/chat/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ emergencyType, location })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    sessionId = data.sessionId;
+                    
+                    // Hide the emergency form and show the chat interface
+                    document.getElementById('emergency-form').style.display = 'none';
+                    document.getElementById('chat-interface').style.display = 'block';
+                    
+                    // Display the initial message from the chatbot
+                    addMessage(data.message, 'bot');
+                } else {
+                    alert('Error starting chat: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to start chat. Please try again.');
+            }
+        });
+        
+        document.getElementById('message-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value.trim();
+            
+            if (!message) return;
+            
+            // Display the user's message
+            addMessage(message, 'user');
+            
+            // Clear the input field
+            messageInput.value = '';
+            
+            try {
+                const response = await fetch('/api/chat/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sessionId, message })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Display the chatbot's response
+                    addMessage(data.response, 'bot');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to send message. Please try again.');
+            }
+        });
+        
+        document.getElementById('end-chat-btn').addEventListener('click', async function() {
+            if (!sessionId) return;
+            
+            try {
+                const response = await fetch(`/api/chat/${sessionId}/end`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Chat session ended.');
+                    // Reset the UI
+                    document.getElementById('emergency-form').style.display = 'block';
+                    document.getElementById('chat-interface').style.display = 'none';
+                    document.getElementById('chat-container').innerHTML = '';
+                    sessionId = null;
+                } else {
+                    alert('Error ending chat: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to end chat. Please try again.');
+            }
+        });
+        
+        function addMessage(message, sender) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageElement = document.createElement('div');
+            
+            messageElement.classList.add('message-container');
+            messageElement.innerHTML = `
+                <div class="message ${sender === 'user' ? 'user-message' : 'bot-message'}">
+                    ${message}
+                </div>
+            `;
+            
+            chatContainer.appendChild(messageElement);
+            
+            // Auto-scroll to the bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>
