@@ -9,10 +9,10 @@ const vertexAI = new VertexAI({
 });
 
 const textModel = vertexAI.getGenerativeModel({
-  model: 'gemini-pro',
+  model: 'gemini-1.5-pro',  // Upgraded from gemini-pro to gemini-1.5-pro
   generation_config: {
     max_output_tokens: 1024,
-    temperature: 0.2,
+    temperature: 0.2,     // Keep low temperature for consistency
     top_p: 0.95,
     top_k: 40
   }
@@ -130,4 +130,4 @@ const evacuationOptimizer = {
   }
 };
 
-module.exports = evacuationOptimizer; 
+module.exports = evacuationOptimizer;

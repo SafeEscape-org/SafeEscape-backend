@@ -6,7 +6,7 @@ const http = require('http');
 const socketIO = require('socket.io');
 const pubSubService = require('./services/pubsub/pubSubService');
 const socketService = require('./services/socket/socketService');
-
+const evacuationController = require('./controllers/evacuationController');
 
 // Load environment variables
 dotenv.config();
@@ -18,12 +18,54 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Root route for browser testing // remove at deployment time
+app.get('/', (req, res) => {
+  res.send(`
+    <html>
+      <head>
+        <title>SafeEscape API</title>
+        <style>
+          body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+          h1 { color: #e74c3c; }
+          .endpoint { background: #f8f9fa; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+          code { background: #eee; padding: 2px 5px; border-radius: 3px; }
+        </style>
+      </head>
+      <body>
+        <h1>SafeEscape API - Running Successfully</h1>
+        <p>The backend server is running correctly. Use the following endpoints for testing:</p>
+        
+        <div class="endpoint">
+          <strong>Get Safe Locations:</strong>
+          <br>
+          <code>GET /api/evacuation/safe-locations?lat=19.076&lng=72.8777</code>
+        </div>
+        
+        <div class="endpoint">
+          <strong>Start Emergency Chat:</strong>
+          <br>
+          <code>POST /api/chat/start</code>
+        </div>
+        
+        <div class="endpoint">
+          <strong>Get Disaster Reports:</strong>
+          <br>
+          <code>GET /api/emergency/reports</code>
+        </div>
+        
+        <p>For full API documentation, refer to the project documentation.</p>
+      </body>
+    </html>
+  `);
+});
+
 // Import Routes
 const emergencyRoutes = require('./routes/emergencyRoutes');
 const mapRoutes = require('./routes/mapRoutes');
 const alertRoutes = require('./routes/alertroutes');
 const userRoutes = require('./routes/userRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const evacuationRoutes = require('./routes/evacuationRoutes'); 
 
 // Register Routes
 app.use('/api/emergency', emergencyRoutes);
@@ -31,6 +73,7 @@ app.use('/api/maps', mapRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/evacuation', evacuationRoutes);
 
 // Create HTTP server
 const server = http.createServer(app);

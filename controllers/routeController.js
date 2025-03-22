@@ -1,4 +1,4 @@
-const evacuationRouteService = require('../services/mapServices/evacuationRoutes');
+const evacuationRouteService = require('../routes/evacuationRoutes');
 
 class RouteController {
   async getEvacuationRoute(req, res) {

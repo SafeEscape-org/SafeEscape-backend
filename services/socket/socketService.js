@@ -1,8 +1,7 @@
 const socketIO = require('socket.io');
 const pubSubService = require('../pubsub/pubSubService');
 const admin = require('firebase-admin');
-const geolib = require('geolib'); // You'll need to install this: npm install geolib
-
+const geolib = require('geolib'); 
 // Import the UserManager component
 const UserManager = require('./components/userManager');
 const NotificationHandler = require('./components/notificationHandler');
