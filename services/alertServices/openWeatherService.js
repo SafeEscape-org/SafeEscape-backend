@@ -41,8 +41,8 @@ const openWeatherService = {
 };
 
 // Example usage
-openWeatherService.getCurrentWeather('London')
-    .then(data => console.log(data))
-    .catch(err => console.error(err));
+// openWeatherService.getCurrentWeather('London')
+//     .then(data => console.log(data))
+//     .catch(err => console.error(err));
 
 module.exports = openWeatherService; 

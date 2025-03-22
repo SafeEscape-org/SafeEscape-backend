@@ -178,6 +178,7 @@ class PushNotificationService {
       }
 
       const disaster = disasterSnapshot.docs[0].data();
+      console.log("disaster data is", disaster)
       console.log(`🔥 Disaster Alert: ${disaster.type} in ${disaster.location.city}`);
 
       // Step 2: Fetch users in the affected location
