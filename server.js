@@ -6,7 +6,7 @@ const http = require('http');
 const socketIO = require('socket.io');
 const pubSubService = require('./services/pubsub/pubSubService');
 const socketService = require('./services/socket/socketService');
-
+const PushNotificationService = require('./services/notificationServices/pushNotifications/pushNotification')
 const evacuationController = require('./controllers/evacuationController');
 
 
@@ -106,11 +106,12 @@ const io = socketIO(server, {
 
 // Initialize socket service with the io instance
 socketService.initialize(io);
+PushNotificationService.notifyUsersOfDisaster();
 
 // Add socket event listeners
 io.on('connection', (socket) => {
+  PushNotificationService.notifyUsersOfDisaster();
   console.log('Client connected:', socket.id);
-
   // Handle emergency alerts from clients
   socket.on('send-emergency-alert', (data) => {
     console.log('Received emergency alert:', data);
