@@ -2,12 +2,12 @@ const express = require('express');
 const router = express.Router();
 const geminiService = require('../services/ai gemini/geminiService');
 
-// Start a new chat session
+// Start a new chat session without requiring parameters
 router.post('/chat', async (req, res) => {
   try {
-    const { emergencyType, location } = req.body;
-    const result = await geminiService.startChat(emergencyType || 'general', location || 'unknown');
-    res.json(result);
+    // Use default values for emergencyType and location
+    const result = await geminiService.startChat('general', 'unknown');
+    res.json({ sessionId: result.sessionId });
   } catch (error) {
     console.error('Error starting chat:', error);
     res.status(500).json({ error: 'Failed to start chat session' });

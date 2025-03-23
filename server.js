@@ -24,7 +24,8 @@ const mapRoutes = require('./routes/mapRoutes');
 const alertRoutes = require('./routes/alertroutes');
 const userRoutes = require('./routes/userRoutes');
 const aiRoutes = require('./routes/aiRoutes');
-const geminiRoutes = require('./routes/geminiRoutes'); // Add this line
+const geminiRoutes = require('./routes/geminiRoutes');
+const disasterRoutes = require('./routes/disasterRoutes'); // Add this line
 
 // Register Routes
 app.use('/api/emergency', emergencyRoutes);
@@ -32,7 +33,8 @@ app.use('/api/maps', mapRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/ai', aiRoutes);
-app.use('/api/gemini', geminiRoutes); // Add this line
+app.use('/api/gemini', geminiRoutes);
+app.use('/api/disasters', disasterRoutes); // Add this line
 
 // Create HTTP server
 const server = http.createServer(app);
