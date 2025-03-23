@@ -1,4 +1,7 @@
-const googleMapsService = require('../googleMapsService');
+const googleMapsService = require('../services/googleMapsService');
+const express = require('express');
+const router = express.Router();
+const evacuationController = require('../controllers/evacuationController');
 
 class EvacuationRouteService {
   async calculateEvacuationRoute(userLocation, disasterType) {
@@ -47,3 +50,14 @@ class EvacuationRouteService {
 }
 
 module.exports = new EvacuationRouteService();
+
+// AI-powered smart evacuation (primary method)
+router.post('/optimize', evacuationController.getOptimizedRoute);
+
+// Basic map-based evacuation (alternative/fallback)
+router.get('/basic-route', evacuationController.getBasicEvacuationRoute);
+
+// Get safe locations without routes
+router.get('/safe-locations', evacuationController.getSafeLocations);
+
+module.exports = router;
