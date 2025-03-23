@@ -6,7 +6,9 @@ const http = require('http');
 const socketIO = require('socket.io');
 const pubSubService = require('./services/pubsub/pubSubService');
 const socketService = require('./services/socket/socketService');
+
 const evacuationController = require('./controllers/evacuationController');
+
 
 // Load environment variables
 dotenv.config();
@@ -66,8 +68,12 @@ const alertRoutes = require('./routes/alertroutes');
 const userRoutes = require('./routes/userRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 
+const notifications = require('./routes/pushNotificationAPI');
+
+
 const geminiRoutes = require('./routes/geminiRoutes');
 const disasterRoutes = require('./routes/disasterRoutes'); // Add this line
+
 
 
 // Register Routes
@@ -77,8 +83,12 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/ai', aiRoutes);
 
+app.use('/api/notify-disaster', notifications);
+
+
 app.use('/api/gemini', geminiRoutes);
 app.use('/api/disasters', disasterRoutes); // Add this line
+
 
 
 // Create HTTP server
@@ -139,7 +149,7 @@ app.set('io', io);
 // Initialize Pub/Sub service
 pubSubService.initialize().then(() => {
   console.log('Pub/Sub service initialized');
-  
+
   // Subscribe to topics
   const subscriptions = pubSubService.getSubscriptions();
   console.log("Subscriptions:", JSON.stringify(subscriptions, null, 2));
@@ -148,17 +158,17 @@ pubSubService.initialize().then(() => {
     subscriptions.EMERGENCY_ALERTS_SUB,
     (data, attributes) => socketService.handleEmergencyAlert(data, attributes)
   );
-  
+
   pubSubService.subscribeToTopic(
     subscriptions.EVACUATION_NOTICES_SUB,
     (data, attributes) => socketService.handleEvacuationNotice(data, attributes)
   );
-  
+
   pubSubService.subscribeToTopic(
     subscriptions.DISASTER_WARNINGS_SUB,
     (data, attributes) => socketService.handleDisasterWarning(data, attributes)
   );
-  
+
   pubSubService.subscribeToTopic(
     subscriptions.SYSTEM_NOTIFICATIONS_SUB,
     (data, attributes) => socketService.handleSystemNotification(data, attributes)
@@ -183,13 +193,13 @@ app.get('/test-socket', (req, res) => {
       state: 'Maharashtra'
     }
   };
-  
+
   console.log('Sending test alert:', testAlert);
   socketService.broadcast('emergency-alert', {
     alert: testAlert,
     attributes: { severity: 'high' }
   });
-  
+
   res.json({
     success: true,
     message: 'Test message sent to all clients',
