@@ -35,36 +35,6 @@ exports.analyzeDisasterImage = [
   }
 ];
 
-exports.getOptimizedEvacuationRoute = async (req, res) => {
-  try {
-    const { location, disasterData, userProfile } = req.body;
-    
-    if (!location || !disasterData) {
-      return res.status(400).json({
-        success: false,
-        error: 'Location and disaster data are required'
-      });
-    }
-    
-    const optimizedRoute = await evacuationOptimizer.optimizeEvacuationRoute(
-      location,
-      disasterData,
-      userProfile || {}
-    );
-    
-    res.status(200).json({
-      success: true,
-      data: optimizedRoute
-    });
-  } catch (error) {
-    console.error('Error optimizing evacuation route:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-};
-
 exports.getEmergencyResponse = async (req, res) => {
   try {
     const { query, location, userContext } = req.body;
@@ -119,4 +89,4 @@ exports.getDisasterPrediction = async (req, res) => {
       error: error.message
     });
   }
-}; 
+};

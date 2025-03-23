@@ -3,6 +3,8 @@ const router = express.Router();
 const noaaWeatherService = require('../services/alertServices/noaaWeatherService');
 const usgsEarthquakeService = require('../services/alertServices/usgsEarthquakeService');
 const openFemaService = require('../services/alertServices/openFemaService');
+const openWeatherService = require('../services/alertServices/openWeatherService'); // Add this import
+
 // NOAA Weather Alerts endpoint
 router.get('/weather/noaa', async (req, res) => {
     try {
@@ -10,6 +12,17 @@ router.get('/weather/noaa', async (req, res) => {
         res.json(weatherAlerts);
     } catch (error) {
         res.status(500).json({ error: 'Error fetching NOAA weather alerts' });
+    }
+});
+
+// Add a simple weather endpoint that matches your request pattern
+router.get('/weather/:city', async (req, res) => {
+    try {
+        const city = req.params.city;
+        const currentWeather = await openWeatherService.getCurrentWeather(city);
+        res.json(currentWeather);
+    } catch (error) {
+        res.status(500).json({ error: 'Error fetching weather for ' + req.params.city });
     }
 });
 

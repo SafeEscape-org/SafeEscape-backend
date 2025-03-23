@@ -1,12 +1,11 @@
 const socketIO = require('socket.io');
 const pubSubService = require('../pubsub/pubSubService');
 const admin = require('firebase-admin');
-const geolib = require('geolib'); // You'll need to install this: npm install geolib
-
+const geolib = require('geolib'); 
 // Import the UserManager component
 const UserManager = require('./components/userManager');
 const NotificationHandler = require('./components/notificationHandler');
-const DisasterManager = require('./components/disasterManager');
+const DisasterManager = require('./components/disastermanager');
 
 /**
  * Socket.IO service for real-time communication
@@ -106,7 +105,8 @@ const socketService = {
       // Handle disconnect
       socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
-        self.userManager.handleDisconnect(socket);
+        // Remove this line or replace it with proper disconnect handling
+        // self.userManager.handleDisconnect(socket);
       });
       
       // Function to handle user registration (used by both register events)
@@ -148,7 +148,7 @@ const socketService = {
           }
           
           // Start disaster checks if not already running
-          self.disasterManager.startDisasterChecks();
+          // self.disasterManager.startDisasterChecks();
         } catch (error) {
           console.error('Error registering user:', error);
           socket.emit('registered', {

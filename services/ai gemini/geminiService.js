@@ -1,4 +1,5 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 
 // Store chat sessions (in production, use a database)
 const chatSessions = new Map();
@@ -15,7 +16,8 @@ If you're uncertain, clearly state that professional medical/emergency help shou
 class GeminiService {
   constructor() {
     if (!process.env.GEMINI_API_KEY) {
-      console.warn('Warning: GEMINI_API_KEY is not set in environment variables');
+      console.error('Error: GEMINI_API_KEY is not set in environment variables');
+      console.info('Please check your .env file at the project root');
     }
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "YOUR_API_KEY");
     this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
