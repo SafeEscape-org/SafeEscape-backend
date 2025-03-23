@@ -66,6 +66,7 @@ const alertRoutes = require('./routes/alertroutes');
 const userRoutes = require('./routes/userRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const evacuationRoutes = require('./routes/evacuationRoutes'); 
+const predictionRoutes = require('./routes/predictionRoutes');
 
 // Register Routes
 app.use('/api/emergency', emergencyRoutes);
@@ -74,6 +75,7 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/evacuation', evacuationRoutes);
+app.use('/api/predictions', predictionRoutes);
 
 // Create HTTP server
 const server = http.createServer(app);
