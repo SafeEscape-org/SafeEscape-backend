@@ -5,7 +5,7 @@ const path = require('path');
 const http = require('http');
 const socketIO = require('socket.io');
 const pubSubService = require('./services/pubsub/pubSubService');
-const socketService = require('./services/socket/socketService');
+const socketService = require('./services/socket/socketservice');
 const PushNotificationService = require('./services/notificationServices/pushNotifications/pushNotification')
 const evacuationController = require('./controllers/evacuationController');
 
