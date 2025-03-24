@@ -248,10 +248,12 @@ class DisasterManager {
    * Send all active disasters to a specific user
    * @param {string} userId - User ID
    * @param {string} socketId - Socket ID
+   * @param {Object} options - Additional options
    */
-  async sendActiveDisastersToUser(userId, socketId) {
+  async sendActiveDisastersToUser(userId, socketId, options = {}) {
     try {
-      console.log(`Sending active disasters to user ${userId} (socket: ${socketId})`);
+      const isNewRegistration = options.isNewRegistration !== false;
+      console.log(`Sending active disasters to user ${userId} (socket: ${socketId}, new: ${isNewRegistration})`);
       
       // Get active disasters from Firestore
       const disastersSnapshot = await admin.firestore()
@@ -283,8 +285,13 @@ class DisasterManager {
         return;
       }
       
+      // Get the user's notification history to prevent duplicates
+      let userNotificationHistory = userInfo.notificationHistory || new Set();
+      
       // Process each disaster
       const relevantDisasters = [];
+      const newDisasters = [];
+      
       disastersSnapshot.forEach(doc => {
         const disaster = { id: doc.id, ...doc.data() };
         
@@ -305,30 +312,46 @@ class DisasterManager {
         
         // If user is within disaster radius, add to relevant disasters
         if (distance <= radius) {
-          relevantDisasters.push({
+          const disasterWithDistance = {
             ...disaster,
             distance: distance,
             distanceKm: (distance/1000).toFixed(2)
-          });
+          };
+          
+          relevantDisasters.push(disasterWithDistance);
+          
+          // Check if this disaster has already been sent to this user
+          const disasterKey = `disaster-${disaster.id}-${disaster.updatedAt || disaster.createdAt || Date.now()}`;
+          
+          if (!userNotificationHistory.has(disasterKey)) {
+            newDisasters.push(disasterWithDistance);
+            userNotificationHistory.add(disasterKey);
+          }
         }
       });
       
-      console.log(`Found ${relevantDisasters.length} relevant disasters for user ${userId}`);
+      // Update the user's notification history
+      userInfo.notificationHistory = userNotificationHistory;
+      this.userManager.getConnectedUsers().set(userId, userInfo);
       
-      // Send relevant disasters to user
-      if (relevantDisasters.length > 0) {
-        // Send as a batch first
-        this.userManager.sendToUser(userId, 'active-disasters', {
-          count: relevantDisasters.length,
-          message: `${relevantDisasters.length} active disasters in your area`,
-          disasters: relevantDisasters,
-          timestamp: new Date().toISOString()
-        });
-        
+      console.log(`Found ${relevantDisasters.length} relevant disasters for user ${userId}, ${newDisasters.length} are new`);
+      
+      // Always send the summary of active disasters
+      this.userManager.sendToUser(userId, 'active-disasters', {
+        count: relevantDisasters.length,
+        message: `${relevantDisasters.length} active disasters in your area`,
+        disasters: relevantDisasters,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Only send individual notifications for new disasters or for new users
+      if (newDisasters.length > 0 || isNewRegistration) {
         // Process disasters in batches to prevent overwhelming the connection
+        const disastersToProcess = isNewRegistration ? relevantDisasters : newDisasters;
         const batchSize = 2;
-        for (let i = 0; i < relevantDisasters.length; i += batchSize) {
-          const batch = relevantDisasters.slice(i, i + batchSize);
+        
+        for (let i = 0; i < disastersToProcess.length; i += batchSize) {
+          const batch = disastersToProcess.slice(i, i + batchSize);
           
           // Use setTimeout to stagger notifications
           setTimeout(() => {
@@ -355,7 +378,7 @@ class DisasterManager {
               const attributes = {
                 severity: disaster.severity || 'high',
                 region: `${disaster.location.city || ''},${disaster.location.state || ''}`,
-                source: 'reconnection-update'
+                source: isNewRegistration ? 'new-registration' : 'new-disaster'
               };
               
               // Create personalized warning with distance information
@@ -396,12 +419,7 @@ class DisasterManager {
           }, Math.floor(i/batchSize) * 500); // Stagger batches by 500ms
         }
       } else {
-        // No relevant disasters found
-        this.userManager.sendToUser(userId, 'active-disasters', {
-          count: 0,
-          message: 'No active disasters in your area',
-          disasters: []
-        });
+        console.log(`No new disasters to notify user ${userId} about`);
       }
     } catch (error) {
       console.error(`Error sending active disasters to user ${userId}:`, error);

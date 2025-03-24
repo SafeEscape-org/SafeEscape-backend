@@ -212,6 +212,44 @@ class UserManager {
   getUserCount() {
     return this.connectedUsers.size;
   }
+  
+  /**
+   * Check if a user is already connected
+   * @param {string} userId - User ID to check
+   * @return {boolean} - True if user is connected, false otherwise
+   */
+  isUserConnected(userId) {
+    return this.connectedUsers.has(userId);
+  }
+  
+  /**
+   * Handle socket disconnect
+   * @param {Object} socket - Socket.IO socket
+   */
+  handleDisconnect(socket) {
+    // Find the user associated with this socket
+    let disconnectedUserId = null;
+    
+    for (const [userId, userData] of this.connectedUsers.entries()) {
+      if (userData.socketId === socket.id) {
+        disconnectedUserId = userId;
+        break;
+      }
+    }
+    
+    if (disconnectedUserId) {
+      console.log(`User ${disconnectedUserId} disconnected (socket: ${socket.id})`);
+      
+      // Remove user from all rooms
+      socket.leave(`user-${disconnectedUserId}`);
+      
+      // Remove user from connected users map
+      this.connectedUsers.delete(disconnectedUserId);
+      
+      // Emit user disconnected event for other components
+      this.io.emit('user-disconnected', { userId: disconnectedUserId });
+    }
+  }
 }
 
 module.exports = UserManager;
