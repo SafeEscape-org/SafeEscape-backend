@@ -1,35 +1,52 @@
+// Import the Vertex AI client
 const { VertexAI } = require('@google-cloud/vertexai');
 const openWeatherService = require('../alertServices/openWeatherService');
 const usgsEarthquakeService = require('../alertServices/usgsEarthquakeService');
+const path = require('path');
 require('dotenv').config();
 
-// Initialize Vertex AI
+// Set the path to the Vertex AI service account key file
+const vertexAIKeyPath = path.resolve(__dirname, '../../config/vertexai-service-Account.json');
+
+// Set environment variable for Vertex AI operations
+process.env.GOOGLE_APPLICATION_CREDENTIALS = vertexAIKeyPath;
+
+// Initialize Vertex AI with explicit credentials
 const vertexAI = new VertexAI({
-  project: process.env.GOOGLE_CLOUD_PROJECT_ID,
+  project: process.env.GOOGLE_CLOUD_PROJECT_ID || 'safeescape',
   location: process.env.VERTEX_AI_LOCATION || 'us-central1',
+  keyFilename: vertexAIKeyPath,
 });
 
 // Initialize different models for different disaster prediction tasks
-const geminiPro = vertexAI.getGenerativeModel({
-  model: 'gemini-1.5-pro', // Upgraded to Gemini 1.5 Pro 
-  generation_config: {
-    max_output_tokens: 1024,
-    temperature: 0.2,
-    top_p: 0.95,
-    top_k: 40
-  }
-});
+let geminiPro;
+let imageAnalysisModel;
 
-// For image analysis of disaster areas (satellite images, user photos)
-const imageAnalysisModel = vertexAI.getGenerativeModel({
-  model: 'gemini-1.5-pro-vision',
-  generation_config: {
-    max_output_tokens: 1024,
-    temperature: 0.1,
-    top_p: 0.95,
-    top_k: 40
-  }
-});
+try {
+  geminiPro = vertexAI.getGenerativeModel({
+    model: 'gemini-1.5-pro',
+    generation_config: {
+      max_output_tokens: 1024,
+      temperature: 0.2,
+      top_p: 0.95,
+      top_k: 40
+    }
+  });
+
+  imageAnalysisModel = vertexAI.getGenerativeModel({
+    model: 'gemini-1.5-pro-vision',
+    generation_config: {
+      max_output_tokens: 1024,
+      temperature: 0.1,
+      top_p: 0.95,
+      top_k: 40
+    }
+  });
+  
+  console.log('Successfully initialized Vertex AI models');
+} catch (error) {
+  console.error('Error initializing Vertex AI models:', error.message);
+}
 
 // Mock historical data by region (in production, this would come from a database)
 const historicalDisasterData = {
@@ -65,6 +82,12 @@ const disasterPredictionService = {
     try {
       console.log('Generating predictive analysis for:', location);
       
+      // Check if we have access to the Gemini model
+      if (!geminiPro) {
+        console.log('Gemini model not available, using fallback');
+        return this.getDefaultRiskAssessment(location);
+      }
+      
       // Get historical disaster data
       const historicalData = this.getHistoricalDisasterData(location);
       
@@ -74,7 +97,7 @@ const disasterPredictionService = {
       // Create prompt for predictive analysis
       const prompt = `
         Based on historical disaster data and current environmental conditions, 
-        analyze the potential disaster risks for ${location.city || 'Unknown'}, ${location.state || 'Unknown'}, India.
+        analyze the potential disaster risks for ${location.city || 'Unknown'}, ${location.state || 'Unknown'}, ${location.country || 'India'}.
         
         Historical disaster data:
         ${JSON.stringify(historicalData, null, 2)}
@@ -105,17 +128,51 @@ const disasterPredictionService = {
         }
       `;
       
-      // Generate prediction using Gemini 1.5 Pro
-      const result = await geminiPro.generateContent(prompt);
-      const responseText = result.response.text();
-      
       try {
-        // Parse the JSON response
-        return JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('Error parsing model response:', parseError);
-        // Fall back to text extraction if JSON parsing fails
-        return this.extractStructuredData(responseText);
+        // Generate prediction using Gemini 1.5 Pro
+        const result = await geminiPro.generateContent(prompt);
+        
+        // Fix: Access the text content correctly based on the API response structure
+        let responseText;
+        if (result.response && typeof result.response.text === 'function') {
+          responseText = result.response.text();
+        } else if (result.response && result.response.candidates && result.response.candidates[0]) {
+          // Alternative structure
+          responseText = result.response.candidates[0].content.parts[0].text;
+        } else if (result.candidates && result.candidates[0]) {
+          // Another possible structure
+          responseText = result.candidates[0].content.parts[0].text;
+        } else {
+          console.log('Unexpected response structure:', JSON.stringify(result, null, 2));
+          throw new Error('Unable to extract text from AI response');
+        }
+        
+        try {
+          // Clean the response text to handle markdown code blocks
+          let cleanedText = responseText;
+          
+          // Check if the response contains markdown code blocks
+          const jsonBlockMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+          if (jsonBlockMatch && jsonBlockMatch[1]) {
+            cleanedText = jsonBlockMatch[1].trim();
+          }
+          
+          // Parse the JSON response
+          return JSON.parse(cleanedText);
+        } catch (parseError) {
+          console.error('Error parsing model response:', parseError);
+          // Fall back to text extraction if JSON parsing fails
+          return this.extractStructuredData(responseText);
+        }
+      } catch (aiError) {
+        console.error('AI model error:', aiError.message);
+        // Check if it's a permission error
+        if (aiError.message.includes('PERMISSION_DENIED') || 
+            aiError.message.includes('Permission') || 
+            aiError.code === 403) {
+          console.log('Permission denied for AI model, using fallback data');
+        }
+        return this.getDefaultRiskAssessment(location);
       }
     } catch (error) {
       console.error('Prediction error:', error);
@@ -224,6 +281,18 @@ const disasterPredictionService = {
     return defaultAssessment;
   },
 
+  getHistoricalDisasterData(location) {
+    const city = location.city || '';
+    // Check if we have historical data for this city
+    if (historicalDisasterData[city]) {
+      return historicalDisasterData[city];
+    }
+    
+    // Return default data if no city-specific data exists
+    return historicalDisasterData['default'];
+  },
+
+  // Complete the getCurrentConditions method
   async getCurrentConditions(location) {
     try {
       // Get weather data with better error handling
@@ -240,14 +309,40 @@ const disasterPredictionService = {
         };
       }
       
-      // Rest of the method...
+      // Return the conditions
+      return {
+        weather: {
+          temperature: weather.main?.temp || 25,
+          humidity: weather.main?.humidity || 50,
+          windSpeed: weather.wind?.speed || 10,
+          conditions: weather.weather?.[0]?.main || 'Clear'
+        },
+        // Add more environmental data as needed
+        season: this.getCurrentSeason(),
+        recentEvents: []
+      };
     } catch (error) {
+      console.error('Error getting current conditions:', error);
       // Default values if anything fails
+      return {
+        weather: {
+          temperature: 25,
+          humidity: 50,
+          windSpeed: 10,
+          conditions: 'Clear'
+        },
+        season: this.getCurrentSeason(),
+        recentEvents: []
+      };
     }
   },
-
-  getHistoricalDisasterData(location) {
-    // Implementation of getHistoricalDisasterData method
+  
+  getCurrentSeason() {
+    const month = new Date().getMonth();
+    if (month >= 2 && month <= 4) return 'Summer';
+    if (month >= 5 && month <= 8) return 'Monsoon';
+    if (month >= 9 && month <= 10) return 'Autumn';
+    return 'Winter';
   }
 };
 
