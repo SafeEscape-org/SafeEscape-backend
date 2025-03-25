@@ -40,10 +40,14 @@ module.exports = function(app, server) {
   const routeRoutes = require('./routes/routeRoutes');
   const safeZoneRoutes = require('./routes/safeZoneRoutes');
   const userRoutes = require('./routes/userRoutes');
+  const diagnosticRoutes = require('./routes/diagnosticRoutes');
   
   console.log('Registering API routes...');
   
   // Register Routes with logging
+  console.log('Registering /api/diagnostic routes');
+  app.use('/api/diagnostic', diagnosticRoutes);
+
   console.log('Registering /api/ai routes');
   app.use('/api/ai', aiRoutes);
   
@@ -222,6 +226,12 @@ module.exports = function(app, server) {
     });
   });
   
+  console.log('Routes registered:', 
+    app._router.stack
+      .filter(r => r.route)
+      .map(r => `${Object.keys(r.route.methods)[0].toUpperCase()} ${r.route.path}`)
+  );
+
   console.log('Full server configuration complete');
   return app;
 };

@@ -21,6 +21,21 @@ app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
+// Add a root route that's guaranteed to work
+app.get('/', (req, res) => {
+  res.send(`
+    <h1>SafeEscape API</h1>
+    <p>Status: Running</p>
+    <p>Time: ${new Date().toISOString()}</p>
+    <p>Environment: ${process.env.NODE_ENV || 'development'}</p>
+    <p>Try these endpoints:</p>
+    <ul>
+      <li><a href="/health">/health</a></li>
+      <li><a href="/direct-test">/direct-test</a></li>
+    </ul>
+  `);
+});
+
 // After successful startup, load the full application
 function loadFullApplication() {
   try {
