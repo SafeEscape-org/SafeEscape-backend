@@ -205,9 +205,21 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start the server
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Wrap the server startup in a try-catch
+try {
+  // Start the server
+  const PORT = process.env.PORT || 5000;
+  server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+} catch (error) {
+  console.error('Failed to start server:', error);
+  process.exit(1); // Exit with error code
+}
+
+// Add global unhandled exception handler
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+  // Keep process running but log the error
 });
 
