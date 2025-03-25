@@ -25,14 +25,21 @@ app.get('/health', (req, res) => {
 function loadFullApplication() {
   try {
     console.log('Loading full application from server-core.js...');
-    
-    // Import the server-core configuration function
     const configureApp = require('./server-core');
-    
-    // Apply configuration to our app instance
+    console.log('server-core.js loaded successfully, configuring app...');
     configureApp(app, server);
     
-    console.log('✅ Full application loaded successfully - all routes registered');
+    // Add direct test route
+    app.get('/direct-test', (req, res) => {
+      res.json({ message: 'Direct test route works' });
+    });
+    
+    console.log('Routes registered:');
+    app._router.stack.forEach(r => {
+      if (r.route && r.route.path) {
+        console.log(`${r.route.stack[0].method.toUpperCase()} ${r.route.path}`);
+      }
+    });
   } catch (error) {
     console.error('❌ ERROR: Failed to load full application:', error);
     console.log('Continuing with minimal functionality');

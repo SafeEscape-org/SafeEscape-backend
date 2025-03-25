@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
-const http = require('http');
 const socketIO = require('socket.io');
 const helmet = require('helmet');
 const compression = require('compression');
@@ -10,95 +9,87 @@ const compression = require('compression');
 // Load environment variables
 dotenv.config();
 
-// Initialize express
-const app = express();
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(helmet({ contentSecurityPolicy: false }));
-app.use(compression());
-
-// Root route for browser testing // remove at deployment time
-app.get('/', (req, res) => {
-  res.send(`
-    <html>
-      <head>
-        <title>SafeEscape API</title>
-        <style>
-          body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-          h1 { color: #e74c3c; }
-          .endpoint { background: #f8f9fa; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-          code { background: #eee; padding: 2px 5px; border-radius: 3px; }
-        </style>
-      </head>
-      <body>
-        <h1>SafeEscape API - Running Successfully</h1>
-        <p>The backend server is running correctly. Use the following endpoints for testing:</p>
-        
-        <div class="endpoint">
-          <strong>Get Safe Locations:</strong>
-          <br>
-          <code>GET /api/evacuation/safe-locations?lat=19.076&lng=72.8777</code>
-        </div>
-        
-        <div class="endpoint">
-          <strong>Start Emergency Chat:</strong>
-          <br>
-          <code>POST /api/chat/start</code>
-        </div>
-        
-        <div class="endpoint">
-          <strong>Get Disaster Reports:</strong>
-          <br>
-          <code>GET /api/emergency/reports</code>
-        </div>
-        
-        <p>For full API documentation, refer to the project documentation.</p>
-      </body>
-    </html>
-  `);
-});
-
-// Add a health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).send('OK');
-});
-
-// Import Routes
-const aiRoutes = require('./routes/aiRoutes');
-const alertRoutes = require('./routes/alertRoutes');
-const disasterRoutes = require('./routes/disasterRoutes');
-const emergencyRoutes = require('./routes/emergencyRoutes');
-const evacuationRoutes = require('./routes/evacuationRoutes');
-const geminiRoutes = require('./routes/geminiRoutes');
-const mapRoutes = require('./routes/mapRoutes');
-const predictionRoutes = require('./routes/predictionRoutes');
-const pushNotificationRoutes = require('./routes/pushNotificationAPI');
-const routeRoutes = require('./routes/routeRoutes');
-const safeZoneRoutes = require('./routes/safeZoneRoutes');
-const userRoutes = require('./routes/userRoutes');
-
-// Register Routes
-app.use('/api/ai', aiRoutes);
-app.use('/api/alerts', alertRoutes);
-app.use('/api/disasters', disasterRoutes);
-app.use('/api/emergency', emergencyRoutes);
-app.use('/api/evacuation', evacuationRoutes);
-app.use('/api/gemini', geminiRoutes);
-app.use('/api/maps', mapRoutes);
-app.use('/api/predictions', predictionRoutes);
-app.use('/api/notifications', pushNotificationRoutes);
-app.use('/api/routes', routeRoutes);
-app.use('/api/safe-zones', safeZoneRoutes);
-app.use('/api/users', userRoutes);
-
-// Remove direct server initialization and move to module.exports function
-
+// Export the configuration function
 module.exports = function(app, server) {
   console.log('Configuring full server application...');
   
+  // Add middleware
+  app.use(cors());
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+  app.use(helmet({ contentSecurityPolicy: false }));
+  app.use(compression());
+  
+  // Add a health check endpoint
+  app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+  });
+  
+  console.log('Loading route modules...');
+  
+  // Import Routes
+  const aiRoutes = require('./routes/aiRoutes');
+  const alertRoutes = require('./routes/alertRoutes');
+  const disasterRoutes = require('./routes/disasterRoutes');
+  const emergencyRoutes = require('./routes/emergencyRoutes');
+  const evacuationRoutes = require('./routes/evacuationRoutes');
+  const geminiRoutes = require('./routes/geminiRoutes');
+  const mapRoutes = require('./routes/mapRoutes');
+  const predictionRoutes = require('./routes/predictionRoutes');
+  const pushNotificationRoutes = require('./routes/pushNotificationAPI');
+  const routeRoutes = require('./routes/routeRoutes');
+  const safeZoneRoutes = require('./routes/safeZoneRoutes');
+  const userRoutes = require('./routes/userRoutes');
+  
+  console.log('Registering API routes...');
+  
+  // Register Routes with logging
+  console.log('Registering /api/ai routes');
+  app.use('/api/ai', aiRoutes);
+  
+  console.log('Registering /api/alerts routes');
+  app.use('/api/alerts', alertRoutes);
+  
+  console.log('Registering /api/disasters routes');
+  app.use('/api/disasters', disasterRoutes);
+  
+  console.log('Registering /api/emergency routes');
+  app.use('/api/emergency', emergencyRoutes);
+  
+  console.log('Registering /api/evacuation routes');
+  app.use('/api/evacuation', evacuationRoutes);
+  
+  console.log('Registering /api/gemini routes');
+  app.use('/api/gemini', geminiRoutes);
+  
+  console.log('Registering /api/maps routes');
+  app.use('/api/maps', mapRoutes);
+  
+  console.log('Registering /api/predictions routes');
+  app.use('/api/predictions', predictionRoutes);
+  
+  console.log('Registering /api/notifications routes');
+  app.use('/api/notifications', pushNotificationRoutes);
+  
+  console.log('Registering /api/routes routes');
+  app.use('/api/routes', routeRoutes);
+  
+  console.log('Registering /api/safe-zones routes');
+  app.use('/api/safe-zones', safeZoneRoutes);
+  
+  console.log('Registering /api/users routes');
+  app.use('/api/users', userRoutes);
+  
+  // Add a direct API test route
+  app.get('/api/status', (req, res) => {
+    res.json({
+      status: 'online',
+      message: 'API is working!',
+      timestamp: new Date(),
+      environment: process.env.NODE_ENV
+    });
+  });
+
   // Initialize Socket.IO if not already initialized
   let io = app.get('io');
   if (!io) {
