@@ -20,13 +20,18 @@ if (isCloudRun) {
   const compression = require('compression');
   
   // Route imports
-  const emergencyRoutes = require('./routes/emergencyRoutes');
-  const predictionRoutes = require('./routes/predictionRoutes');
-  const evacuationRoutes = require('./routes/evacuationRoutes');
-  const mapRoutes = require('./routes/mapRoutes');
-  const userRoutes = require('./routes/userRoutes');
+  const aiRoutes = require('./routes/aiRoutes');
   const alertRoutes = require('./routes/alertRoutes');
-  const chatRoutes = require('./routes/chatRoutes');
+  const disasterRoutes = require('./routes/disasterRoutes');
+  const emergencyRoutes = require('./routes/emergencyRoutes');
+  const evacuationRoutes = require('./routes/evacuationRoutes');
+  const geminiRoutes = require('./routes/geminiRoutes');
+  const mapRoutes = require('./routes/mapRoutes');
+  const predictionRoutes = require('./routes/predictionRoutes');
+  const pushNotificationRoutes = require('./routes/pushNotificationAPI');
+  const routeRoutes = require('./routes/routeRoutes');
+  const safeZoneRoutes = require('./routes/safeZoneRoutes');
+  const userRoutes = require('./routes/userRoutes');
   
   // Service imports
   const socketService = require('./services/socketService');
@@ -188,14 +193,18 @@ if (isCloudRun) {
   });
   
   // Register your routes
-  app.use('/api/emergency', emergencyRoutes);
-  // ... other routes
-  app.use('/api/predictions', predictionRoutes);
-  app.use('/api/evacuation', evacuationRoutes);
-  app.use('/api/maps', mapRoutes);
-  app.use('/api/users', userRoutes);
+  app.use('/api/ai', aiRoutes);
   app.use('/api/alerts', alertRoutes);
-  app.use('/api/chat', chatRoutes);
+  app.use('/api/disasters', disasterRoutes);
+  app.use('/api/emergency', emergencyRoutes);
+  app.use('/api/evacuation', evacuationRoutes);
+  app.use('/api/gemini', geminiRoutes);
+  app.use('/api/maps', mapRoutes);
+  app.use('/api/predictions', predictionRoutes);
+  app.use('/api/notifications', pushNotificationRoutes);
+  app.use('/api/routes', routeRoutes);
+  app.use('/api/safe-zones', safeZoneRoutes);
+  app.use('/api/users', userRoutes);
   
   // Error handling middleware
   app.use((err, req, res, next) => {

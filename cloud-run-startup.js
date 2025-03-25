@@ -5,6 +5,13 @@ console.log('Starting SafeEscape Backend in Cloud Run mode...');
 console.log(`Environment: ${process.env.NODE_ENV}`);
 console.log(`PORT: ${process.env.PORT}`);
 
+// Set services to be enabled
+process.env.ENABLE_PUBSUB = 'true';
+process.env.ENABLE_SOCKET = 'true';
+
+console.log(`PubSub Enabled: ${process.env.ENABLE_PUBSUB}`);
+console.log(`Socket.IO Enabled: ${process.env.ENABLE_SOCKET}`);
+
 // Initialize express with minimal configuration
 const app = express();
 const server = http.createServer(app);

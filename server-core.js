@@ -69,7 +69,7 @@ app.get('/health', (req, res) => {
 // Import Routes
 const emergencyRoutes = require('./routes/emergencyRoutes');
 const mapRoutes = require('./routes/mapRoutes');
-const alertRoutes = require('./routes/alertroutes');
+const alertRoutes = require('./routes/alertRoutes');
 const userRoutes = require('./routes/userRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const evacuationRoutes = require('./routes/evacuationRoutes'); 
@@ -138,34 +138,42 @@ io.on('connection', (socket) => {
 // Make io available to routes
 app.set('io', io);
 
-// Initialize Pub/Sub service
-pubSubService.initialize().then(() => {
-  console.log('Pub/Sub service initialized');
+// Initialize Pub/Sub service conditionally
+if (process.env.ENABLE_PUBSUB === 'true') {
+  pubSubService.initialize().then(() => {
+    console.log('Pub/Sub service initialized');
 
-  // Subscribe to topics
-  const subscriptions = pubSubService.getSubscriptions();
-  console.log("Subscriptions:", JSON.stringify(subscriptions, null, 2));
-  // Set up message handlers
-  pubSubService.subscribeToTopic(
-    subscriptions.EMERGENCY_ALERTS_SUB,
-    (data, attributes) => socketService.handleEmergencyAlert(data, attributes)
-  );
+    // Subscribe to topics
+    const subscriptions = pubSubService.getSubscriptions();
+    console.log("Subscriptions:", JSON.stringify(subscriptions, null, 2));
+    
+    // Set up message handlers
+    pubSubService.subscribeToTopic(
+      subscriptions.EMERGENCY_ALERTS_SUB,
+      (data, attributes) => socketService.handleEmergencyAlert(data, attributes)
+    );
 
-  pubSubService.subscribeToTopic(
-    subscriptions.EVACUATION_NOTICES_SUB,
-    (data, attributes) => socketService.handleEvacuationNotice(data, attributes)
-  );
+    pubSubService.subscribeToTopic(
+      subscriptions.EVACUATION_NOTICES_SUB,
+      (data, attributes) => socketService.handleEvacuationNotice(data, attributes)
+    );
 
-  pubSubService.subscribeToTopic(
-    subscriptions.DISASTER_WARNINGS_SUB,
-    (data, attributes) => socketService.handleDisasterWarning(data, attributes)
-  );
+    pubSubService.subscribeToTopic(
+      subscriptions.DISASTER_WARNINGS_SUB,
+      (data, attributes) => socketService.handleDisasterWarning(data, attributes)
+    );
 
-  pubSubService.subscribeToTopic(
-    subscriptions.SYSTEM_NOTIFICATIONS_SUB,
-    (data, attributes) => socketService.handleSystemNotification(data, attributes)
-  );
-});
+    pubSubService.subscribeToTopic(
+      subscriptions.SYSTEM_NOTIFICATIONS_SUB,
+      (data, attributes) => socketService.handleSystemNotification(data, attributes)
+    );
+  }).catch(error => {
+    console.error('Failed to initialize PubSub service:', error);
+    console.log('Continuing without PubSub integration');
+  });
+} else {
+  console.log('PubSub service disabled via environment variable');
+}
 
 // Serve static files for testing
 app.use(express.static('public'));
