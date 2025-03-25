@@ -34,7 +34,8 @@ if (isCloudRun) {
   const userRoutes = require('./routes/userRoutes');
   
   // Service imports
-  const socketService = require('./services/socketService');
+  const socketService = require('./services/socket/socketService'); // Fixed path
+
   const pubSubService = require('./services/pubSubService');
   
   const app = express();
@@ -56,7 +57,7 @@ if (isCloudRun) {
   // Add your middleware
   app.use(cors());
   app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.urlencoded({ extended: true })); 
   app.use(morgan('dev')); // Request logging
   app.use(helmet({ contentSecurityPolicy: false })); // Security headers
   app.use(compression()); // Response compression

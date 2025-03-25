@@ -1,4 +1,4 @@
-const evacuationRouteService = require('../services/mapServices/evacuationRoutes');
+const evacuationRouteService = require('../services/mapServices/googleMapsClient');
 
 class SafeZoneController {
   async getNearestSafeZones(req, res) {

@@ -5,7 +5,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "check-credentials": "node scripts/rotateFirebaseKeys.js",
-    "prestart": "npm run check-credentials"
+    "prestart": "npm run check-credentials",
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
@@ -19,7 +20,7 @@
     "url": "https://github.com/amanmogal/SafeEscape-backend/issues"
   },
   "homepage": "https://github.com/amanmogal/SafeEscape-backend#readme",
-  "description": "",
+  "description": "1. **Real-Time Alerts**\r    - Integrates with IMD (Indian Meteorological Department) and NDMA (National Disaster Management Authority) APIs for earthquake, cyclone, flood, and extreme weather alerts.\r    - Push notifications in multiple languages (Hindi, English, regional languages).",
   "dependencies": {
     "@google-cloud/bigquery": "^7.9.2",
     "@google-cloud/pubsub": "^1.7.3",
@@ -30,6 +31,7 @@
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.0",
     "body-parser": "^1.20.3",
+    "compression": "^1.8.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -38,14 +40,17 @@
     "geolib": "^3.3.4",
     "google-auth-library": "^9.15.1",
     "google-libphonenumber": "^3.2.40",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^8.5.1",
     "memory-cache": "^0.2.0",
     "mongoose": "^6.13.8",
+    "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "node-cache": "^5.1.2",
     "nodemailer": "^6.10.0",
     "sharp": "^0.33.5",
     "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "twilio": "^3.0.0",
     "winston": "^3.3.3"
   }
