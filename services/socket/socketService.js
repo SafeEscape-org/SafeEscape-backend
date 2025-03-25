@@ -105,8 +105,8 @@ const socketService = {
       // Handle disconnect
       socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
-        // Remove this line or replace it with proper disconnect handling
-        // self.userManager.handleDisconnect(socket);
+        // Uncomment and fix the disconnect handling
+        self.userManager.handleDisconnect(socket);
       });
       
       // Function to handle user registration (used by both register events)
@@ -138,13 +138,23 @@ const socketService = {
             return;
           }
           
+          // Check if this is a new registration or reconnection
+          const isNewRegistration = !self.userManager.isUserConnected(userData.userId);
+          
           // Register user with the userManager component
           const registeredUserId = self.userManager.registerUser(socket, userData);
           
           // If registration was successful and we have location data, send active disasters
+          // But only for new users or users who have updated their location
           if (registeredUserId && userData.location) {
-            console.log(`Immediately sending active disasters to newly registered user ${registeredUserId}`);
-            self.disasterManager.sendActiveDisastersToUser(registeredUserId, socket.id);
+            console.log(`Sending active disasters to user ${registeredUserId} (new: ${isNewRegistration})`);
+            
+            // Add a flag to indicate if this is a new registration or reconnection
+            self.disasterManager.sendActiveDisastersToUser(
+              registeredUserId, 
+              socket.id, 
+              { isNewRegistration: isNewRegistration }
+            );
           }
           
           // Start disaster checks if not already running
