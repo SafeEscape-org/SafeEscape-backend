@@ -6,6 +6,9 @@ const usgsEarthquakeService = require('../services/alertServices/usgsEarthquakeS
 const openFemaService = require('../services/alertServices/openFemaService');
 const openWeatherService = require('../services/alertServices/openWeatherService'); // Add this import
 
+// CORRECT way - import your configured Firebase:
+const { admin, db } = require('../config/firebase-config');
+
 // NOAA Weather Alerts endpoint
 router.get('/weather/noaa', async (req, res) => {
     try {

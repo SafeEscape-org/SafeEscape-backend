@@ -49,7 +49,7 @@ class EvacuationRouteService {
   }
 }
 
-module.exports = new EvacuationRouteService();
+const evacuationService = new EvacuationRouteService();
 
 // AI-powered smart evacuation (primary method)
 router.post('/optimize', evacuationController.getOptimizedRoute);
@@ -61,3 +61,6 @@ router.get('/basic-route', evacuationController.getBasicEvacuationRoute);
 router.get('/safe-locations', evacuationController.getSafeLocations);
 
 module.exports = router;
+
+
+exports.evacuationService = evacuationService;

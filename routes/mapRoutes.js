@@ -1,7 +1,6 @@
 const express = require('express');
-const { getEvacuationRoutes, findSafeLocations, getDistanceMatrix, geocodeLocation } = require('../controllers/mapController');
-
 const router = express.Router();
+const { getEvacuationRoutes, findSafeLocations, getDistanceMatrix, geocodeLocation } = require('../controllers/mapController');
 
 router.get('/directions', getEvacuationRoutes);
 router.get('/safe-locations', findSafeLocations);
