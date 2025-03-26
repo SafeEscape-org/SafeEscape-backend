@@ -19,7 +19,7 @@ async function runTests() {
 
   try {
     // Test 1: Basic Text Generation (Gemini Pro)
-    /*await testTextGeneration();*/
+    await testTextGeneration();
     
     // Test 3: Emergency Chatbot
     /*await testEmergencyChatbot();*/
@@ -37,7 +37,7 @@ async function runTests() {
 }
 
 // Test 1: Basic Text Generation
-/* async function testTextGeneration() {
+ async function testTextGeneration() {
   console.log('📝 Test 1: Basic Text Generation');
   
   try {
@@ -46,7 +46,7 @@ async function runTests() {
     });
     
     const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: 'What should I do during a flood emergency?' }] }],
+      contents: [{ role: 'user', parts: [{ text: 'What should I do during a flood emergency?' }] } ],
     });
     
     console.log('Response:', result.response.candidates[0].content.parts[0].text.substring(0, 150) + '...');
@@ -55,15 +55,14 @@ async function runTests() {
     console.error('❌ Basic Text Generation Test Failed:', error);
     throw error;
   }
-} */
+} 
 
-
-// Test 3: Emergency Chatbo
+// Test 3: Emergency Chatbot
 /*async function testEmergencyChatbot() {
   console.log('🤖 Test 3: Emergency Chatbot');
   
   try {
-    const emergencyChatbot = require('./services/vetex ai/emergencyChatbot');
+    const emergencyChatbot = require('./services/vertexai/emergencyChatbot');
     
     const response = await emergencyChatbot.getEmergencyResponse(
       'What should I do if I\'m trapped in a building during an earthquake?',
@@ -84,7 +83,7 @@ async function testDisasterPrediction() {
   console.log('🔮 Test 4: Disaster Prediction');
   
   try {
-    const disasterPrediction = require('./services/vetex ai/disasterPrediction');
+    const disasterPrediction = require('./services/vertexai/disasterPrediction');
     console.log('Available methods:', Object.keys(disasterPrediction));
     
     // Use the correct method name - it might be getPredictiveAnalysis or another name
@@ -106,7 +105,7 @@ async function testEvacuationOptimizer() {
   console.log('🚗 Test 5: Evacuation Optimizer');
   
   try {
-    const evacuationOptimizer = require('./services/vetex ai/evacuationOptimizer');
+    const evacuationOptimizer = require('./services/vertexai/evacuationOptimizer');
     
     // Mock data for testing
     const userLocation = { lat: 19.0760, lng: 72.8777 }; // Mumbai
@@ -141,4 +140,4 @@ async function testEvacuationOptimizer() {
 }
 
 // Run all tests
-runTests(); 
+runTests();

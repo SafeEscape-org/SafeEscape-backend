@@ -3,9 +3,9 @@ const router = express.Router();
 const multer = require('multer');
 const upload = multer({ limits: { fileSize: 10 * 1024 * 1024 } });
 
-const evacuationOptimizer = require('../services/vetex ai/evacuationOptimizer');
-const emergencyChatbot = require('../services/vetex ai/emergencyChatbot');
-const disasterPredictionService = require('../services/vetex ai/disasterPrediction');
+const evacuationOptimizer = require('../services/vertexai/evacuationOptimizer');
+const emergencyChatbot = require('../services/vertexai/emergencyChatbot');
+const disasterPredictionService = require('../services/vertexai/disasterPrediction');
 
 // Emergency chatbot endpoint
 router.post('/chat', async (req, res) => {

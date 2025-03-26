@@ -34,7 +34,7 @@ if (isCloudRun) {
   const userRoutes = require('./routes/userRoutes');
   
   // Service imports
-  const socketService = require('./services/socket/socketService'); // Fixed path
+  const socketService = require('./services/socket/socketService');
 
   const pubSubService = require('./services/pubSubService');
   
