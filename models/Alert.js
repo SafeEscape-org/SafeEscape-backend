@@ -1,23 +1,7 @@
-// const mongoose = require('mongoose');
+// Instead, import the initialized instances:
+const { db, admin } = require('../config/firebase-config');
+const FieldValue = admin.firestore.FieldValue;
 
-// const alertSchema = new mongoose.Schema({
-//   type: { type: String, required: true },
-//   severity: { type: String, enum: ['low', 'medium', 'high'], required: true },
-//   location: {
-//     type: { type: String, default: 'Point' },
-//     coordinates: [Number]
-//   },
-//   description: String,
-//   timestamp: { type: Date, default: Date.now },
-//   affectedUsers: [{
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: 'User'
-//   }]
-// });
-
-// module.exports = mongoose.model('Alert', alertSchema); 
-const admin = require('../config/firebase-config');
-const db = admin.firestore();
 class AlertService {
   /**
    * Create a new alert in Firestore
@@ -35,7 +19,7 @@ class AlertService {
           coordinates: alertData.coordinates || []
         },
         description: alertData.description || '',
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        timestamp: FieldValue.serverTimestamp(),
         affectedUsers: alertData.affectedUsers || []
       };
 
@@ -80,6 +64,7 @@ class AlertService {
   /**
    * Delete an alert
    * @param {string} alertId - Alert document ID
+   * @returns {Promise<Object>} - Deletion result
    */
   async deleteAlert(alertId) {
     try {

@@ -9,6 +9,9 @@ const compression = require('compression');
 // Load environment variables
 dotenv.config();
 
+// Import debug middleware
+const debugMiddleware = require('./middleware/debugMiddleware');
+
 // Export the configuration function
 module.exports = function(app, server) {
   console.log('Configuring full server application...');
@@ -20,6 +23,12 @@ module.exports = function(app, server) {
   app.use(helmet({ contentSecurityPolicy: false }));
   app.use(compression());
   
+  // Add debug middleware to all routes (ONLY for development)
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🔍 Debug middleware enabled');
+    app.use(debugMiddleware);
+  }
+  
   // Add a health check endpoint
   app.get('/health', (req, res) => {
     res.status(200).send('OK');
@@ -27,14 +36,47 @@ module.exports = function(app, server) {
   
   console.log('Loading route modules...');
   
+  // Import diagnostics first (this is guaranteed to work)
+  let diagnosticRoutes;
+  try {
+    // Initialize each one with proper error handling
+    let aiRoutes, alertRoutes, disasterRoutes, emergencyRoutes, evacuationRoutes, 
+        geminiRoutes, mapRoutes, predictionRoutes, pushNotificationRoutes, 
+        routeRoutes, safeZoneRoutes, userRoutes;
+
+    // Initialize each one with proper error handling
+    aiRoutes = require('./routes/aiRoutes');
+    alertRoutes = require('./routes/alertRoutes');
+    mapRoutes = require('./routes/mapRoutes');
+    disasterRoutes = require('./routes/disasterRoutes');
+    emergencyRoutes = require('./routes/emergencyRoutes');
+    evacuationRoutes = require('./routes/evacuationRoutes');
+    geminiRoutes = require('./routes/geminiRoutes');
+    predictionRoutes = require('./routes/predictionRoutes');
+    userRoutes = require('./routes/userRoutes');
+    diagnosticRoutes = require('./routes/diagnosticRoutes');
+  } catch (error) {
+    console.error('⚠️ Failed to load diagnostic routes:', error.message);
+    // Create an emergency diagnostics endpoint
+    diagnosticRoutes = express.Router();
+    diagnosticRoutes.get('/ping', (req, res) => {
+      res.json({ status: 'ok', message: 'Emergency diagnostic endpoint' });
+    });
+  }
+
+  // Register emergency diagnostic routes first
+  app.use('/api/diagnostic', diagnosticRoutes);
+  console.log('✅ Registered emergency diagnostic endpoints');
+
   // Define all route variables
   let aiRoutes, alertRoutes, disasterRoutes, emergencyRoutes, evacuationRoutes, 
       geminiRoutes, mapRoutes, predictionRoutes, pushNotificationRoutes, 
-      routeRoutes, safeZoneRoutes, userRoutes, diagnosticRoutes;
+      routeRoutes, safeZoneRoutes, userRoutes;
 
   // Initialize each one with proper error handling
 
   // AI Routes
+
   try {
     aiRoutes = require('./routes/aiRoutes');
   } catch (error) {
@@ -101,30 +143,6 @@ module.exports = function(app, server) {
     console.error('Failed to load Prediction routes:', error.message);
     predictionRoutes = express.Router();
     predictionRoutes.get('/*', (req, res) => res.status(503).json({error: 'Prediction service unavailable'}));
-  }
-
-  try {
-    pushNotificationRoutes = require('./routes/pushNotificationAPI');
-  } catch (error) {
-    console.error('Failed to load Push Notification routes:', error.message);
-    pushNotificationRoutes = express.Router();
-    pushNotificationRoutes.get('/*', (req, res) => res.status(503).json({error: 'Push Notification service unavailable'}));
-  }
-
-  try {
-    routeRoutes = require('./routes/routeRoutes');
-  } catch (error) {
-    console.error('Failed to load Route routes:', error.message);
-    routeRoutes = express.Router();
-    routeRoutes.get('/*', (req, res) => res.status(503).json({error: 'Route service unavailable'}));
-  }
-
-  try {
-    safeZoneRoutes = require('./routes/safeZoneRoutes');
-  } catch (error) {
-    console.error('Failed to load SafeZone routes:', error.message);
-    safeZoneRoutes = express.Router();
-    safeZoneRoutes.get('/*', (req, res) => res.status(503).json({error: 'SafeZone service unavailable'}));
   }
 
   try {

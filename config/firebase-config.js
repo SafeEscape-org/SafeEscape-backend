@@ -1,49 +1,40 @@
 const admin = require('firebase-admin');
 const serviceAccount = require('./firebase-serviceAccount.json');
 
+let firebaseApp;
+let firestoreDb;
+
 // Initialize Firebase Admin with Firestore
 const initializeFirebase = () => {
     try {
-        admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount)
-        });
+        if (!admin.apps.length) {
+            firebaseApp = admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount)
+            });
+        } else {
+            firebaseApp = admin.app();
+        }
 
-        const db = admin.firestore();
-
-        // Optional: Configure Firestore settings
-        db.settings({
+        firestoreDb = admin.firestore();
+        
+        // Configure Firestore settings
+        firestoreDb.settings({
             timestampsInSnapshots: true,
             ignoreUndefinedProperties: true
         });
 
         console.log('✅ Firebase initialized successfully');
-        return { admin, db };
     } catch (error) {
         console.error('❌ Error initializing Firebase:', error);
-        throw error;
     }
 };
 
-// Initialize Firebase and export instances
-const { admin: firebaseAdmin, db: firestore } = initializeFirebase();
+// Initialize immediately
+initializeFirebase();
 
+// Export both the admin instance and the db
 module.exports = {
-    admin: firebaseAdmin,
-    db: firestore,
-
-    // Collection references
-    collections: {
-        users: firestore.collection('users'),
-        emergencies: firestore.collection('emergencies'),
-        routes: firestore.collection('evacuation-routes'),
-        shelters: firestore.collection('shelters'),
-        disasters: firestore.collection('disasters')
-    },
-
-    // Firestore field values
-    fieldValues: {
-        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
-        delete: admin.firestore.FieldValue.delete,
-        increment: admin.firestore.FieldValue.increment
-    }
-}; 
+    admin,
+    db: firestoreDb,
+    FieldValue: admin.firestore.FieldValue
+};
