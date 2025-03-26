@@ -27,33 +27,141 @@ module.exports = function(app, server) {
   
   console.log('Loading route modules...');
   
-  // Try loading each route module separately with error handling
-  let aiRoutes, alertRoutes, mapRoutes; // etc.
+  // Define all route variables
+  let aiRoutes, alertRoutes, disasterRoutes, emergencyRoutes, evacuationRoutes, 
+      geminiRoutes, mapRoutes, predictionRoutes, pushNotificationRoutes, 
+      routeRoutes, safeZoneRoutes, userRoutes, diagnosticRoutes;
 
+  // Initialize each one with proper error handling
+
+  // AI Routes
   try {
-    console.log('Loading AI routes...');
     aiRoutes = require('./routes/aiRoutes');
   } catch (error) {
     console.error('Failed to load AI routes:', error.message);
-    // Provide a simple fallback route
     aiRoutes = express.Router();
     aiRoutes.get('/*', (req, res) => res.status(503).json({error: 'AI service unavailable'}));
   }
 
-  // Import Routes
-  const disasterRoutes = require('./routes/disasterRoutes');
-  const emergencyRoutes = require('./routes/emergencyRoutes');
-  const evacuationRoutes = require('./routes/evacuationRoutes');
-  const geminiRoutes = require('./routes/geminiRoutes');
-  const predictionRoutes = require('./routes/predictionRoutes');
-  const pushNotificationRoutes = require('./routes/pushNotificationAPI');
-  const routeRoutes = require('./routes/routeRoutes');
-  const safeZoneRoutes = require('./routes/safeZoneRoutes');
-  const userRoutes = require('./routes/userRoutes');
-  const diagnosticRoutes = require('./routes/diagnosticRoutes');
+  // Alert Routes
+  try {
+    alertRoutes = require('./routes/alertRoutes');
+  } catch (error) {
+    console.error('Failed to load Alert routes:', error.message);
+    alertRoutes = express.Router();
+    alertRoutes.get('/*', (req, res) => res.status(503).json({error: 'Alert service unavailable'}));
+  }
+
+  // Map Routes
+  try {
+    mapRoutes = require('./routes/mapRoutes');
+  } catch (error) {
+    console.error('Failed to load Map routes:', error.message);
+    mapRoutes = express.Router();
+    mapRoutes.get('/*', (req, res) => res.status(503).json({error: 'Map service unavailable'}));
+  }
+
+  // Initialize remaining route modules with the same pattern
+  try {
+    disasterRoutes = require('./routes/disasterRoutes');
+  } catch (error) {
+    console.error('Failed to load Disaster routes:', error.message);
+    disasterRoutes = express.Router();
+    disasterRoutes.get('/*', (req, res) => res.status(503).json({error: 'Disaster service unavailable'}));
+  }
+
+  try {
+    emergencyRoutes = require('./routes/emergencyRoutes');
+  } catch (error) {
+    console.error('Failed to load Emergency routes:', error.message);
+    emergencyRoutes = express.Router();
+    emergencyRoutes.get('/*', (req, res) => res.status(503).json({error: 'Emergency service unavailable'}));
+  }
+
+  try {
+    evacuationRoutes = require('./routes/evacuationRoutes');
+  } catch (error) {
+    console.error('Failed to load Evacuation routes:', error.message);
+    evacuationRoutes = express.Router();
+    evacuationRoutes.get('/*', (req, res) => res.status(503).json({error: 'Evacuation service unavailable'}));
+  }
+
+  // Continue with the same pattern for the remaining routes
+  try {
+    geminiRoutes = require('./routes/geminiRoutes');
+  } catch (error) {
+    console.error('Failed to load Gemini routes:', error.message);
+    geminiRoutes = express.Router();
+    geminiRoutes.get('/*', (req, res) => res.status(503).json({error: 'Gemini service unavailable'}));
+  }
+
+  try {
+    predictionRoutes = require('./routes/predictionRoutes');
+  } catch (error) {
+    console.error('Failed to load Prediction routes:', error.message);
+    predictionRoutes = express.Router();
+    predictionRoutes.get('/*', (req, res) => res.status(503).json({error: 'Prediction service unavailable'}));
+  }
+
+  try {
+    pushNotificationRoutes = require('./routes/pushNotificationAPI');
+  } catch (error) {
+    console.error('Failed to load Push Notification routes:', error.message);
+    pushNotificationRoutes = express.Router();
+    pushNotificationRoutes.get('/*', (req, res) => res.status(503).json({error: 'Push Notification service unavailable'}));
+  }
+
+  try {
+    routeRoutes = require('./routes/routeRoutes');
+  } catch (error) {
+    console.error('Failed to load Route routes:', error.message);
+    routeRoutes = express.Router();
+    routeRoutes.get('/*', (req, res) => res.status(503).json({error: 'Route service unavailable'}));
+  }
+
+  try {
+    safeZoneRoutes = require('./routes/safeZoneRoutes');
+  } catch (error) {
+    console.error('Failed to load SafeZone routes:', error.message);
+    safeZoneRoutes = express.Router();
+    safeZoneRoutes.get('/*', (req, res) => res.status(503).json({error: 'SafeZone service unavailable'}));
+  }
+
+  try {
+    userRoutes = require('./routes/userRoutes');
+  } catch (error) {
+    console.error('Failed to load User routes:', error.message);
+    userRoutes = express.Router();
+    userRoutes.get('/*', (req, res) => res.status(503).json({error: 'User service unavailable'}));
+  }
+
+  try {
+    diagnosticRoutes = require('./routes/diagnosticRoutes');
+  } catch (error) {
+    console.error('Failed to load Diagnostic routes:', error.message);
+    diagnosticRoutes = express.Router();
+    diagnosticRoutes.get('/*', (req, res) => res.status(503).json({error: 'Diagnostic service unavailable'}));
+  }
   
   console.log('Registering API routes...');
   
+  // Safe route registration function
+  function registerRoutes(app, path, router, name) {
+    try {
+      if (router && typeof router === 'function') {
+        console.log(`Registering ${path} routes`);
+        app.use(path, router);
+        return true;
+      } else {
+        console.error(`⚠️ ${name || path} is not a valid router`);
+        return false;
+      }
+    } catch (error) {
+      console.error(`⚠️ Failed to register ${name || path} routes:`, error.message);
+      return false;
+    }
+  }
+
   // Register Routes with logging
   console.log('Registering /api/diagnostic routes');
   app.use('/api/diagnostic', diagnosticRoutes);
@@ -61,38 +169,18 @@ module.exports = function(app, server) {
   console.log('Registering /api/ai routes');
   app.use('/api/ai', aiRoutes);
   
-  console.log('Registering /api/alerts routes');
-  app.use('/api/alerts', alertRoutes);
-  
-  console.log('Registering /api/disasters routes');
-  app.use('/api/disasters', disasterRoutes);
-  
-  console.log('Registering /api/emergency routes');
-  app.use('/api/emergency', emergencyRoutes);
-  
-  console.log('Registering /api/evacuation routes');
-  app.use('/api/evacuation', evacuationRoutes);
-  
-  console.log('Registering /api/gemini routes');
-  app.use('/api/gemini', geminiRoutes);
-  
-  console.log('Registering /api/maps routes');
-  app.use('/api/maps', mapRoutes);
-  
-  console.log('Registering /api/predictions routes');
-  app.use('/api/predictions', predictionRoutes);
-  
-  console.log('Registering /api/notifications routes');
-  app.use('/api/notifications', pushNotificationRoutes);
-  
-  console.log('Registering /api/routes routes');
-  app.use('/api/routes', routeRoutes);
-  
-  console.log('Registering /api/safe-zones routes');
-  app.use('/api/safe-zones', safeZoneRoutes);
-  
-  console.log('Registering /api/users routes');
-  app.use('/api/users', userRoutes);
+  console.log('Loading alertRoutes...');
+  registerRoutes(app, '/api/alerts', alertRoutes, 'alertRoutes');
+  registerRoutes(app, '/api/disasters', disasterRoutes, 'disasterRoutes');
+  registerRoutes(app, '/api/emergency', emergencyRoutes, 'emergencyRoutes');
+  registerRoutes(app, '/api/evacuation', evacuationRoutes, 'evacuationRoutes');
+  registerRoutes(app, '/api/gemini', geminiRoutes, 'geminiRoutes');
+  registerRoutes(app, '/api/maps', mapRoutes, 'mapRoutes');
+  registerRoutes(app, '/api/predictions', predictionRoutes, 'predictionRoutes');
+  registerRoutes(app, '/api/notifications', pushNotificationRoutes, 'pushNotificationRoutes');
+  registerRoutes(app, '/api/routes', routeRoutes, 'routeRoutes');
+  registerRoutes(app, '/api/safe-zones', safeZoneRoutes, 'safeZoneRoutes');
+  registerRoutes(app, '/api/users', userRoutes, 'userRoutes');
   
   // Add a direct API test route
   app.get('/api/status', (req, res) => {

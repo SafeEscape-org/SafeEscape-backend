@@ -1,4 +1,4 @@
-const evacuationOptimizer = require('../services/vetex ai/evacuationOptimizer');
+const evacuationOptimizer = require('../services/vertexai/evacuationOptimizer');
 const mapService = require('../services/mapServices/googleMapsClient');
 
 const evacuationController = {

@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const alertController = require('../controllers/alertController');
 const noaaWeatherService = require('../services/alertServices/noaaWeatherService');
 const usgsEarthquakeService = require('../services/alertServices/usgsEarthquakeService');
 const openFemaService = require('../services/alertServices/openFemaService');
@@ -67,5 +68,8 @@ router.get('/weather/openweather/:city', async (req, res) => {
         res.status(500).json({ error: 'Error fetching OpenWeather alerts' });
     }
 });
+
+// Define routes
+router.get('/active', alertController.getActiveAlerts);
 
 module.exports = router;

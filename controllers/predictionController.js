@@ -1,4 +1,4 @@
-const disasterPredictionService = require('../services/vetex ai/disasterPrediction');
+const disasterPredictionService = require('../services/vertexai/disasterPrediction');
 
 /**
  * Get disaster risk assessment for a location
