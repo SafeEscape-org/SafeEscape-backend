@@ -3,7 +3,6 @@ const router = express.Router();
 const multer = require('multer');
 const upload = multer({ limits: { fileSize: 10 * 1024 * 1024 } });
 
-// Import AI services
 const evacuationOptimizer = require('../services/vetex ai/evacuationOptimizer');
 const emergencyChatbot = require('../services/vetex ai/emergencyChatbot');
 const disasterPredictionService = require('../services/vetex ai/disasterPrediction');
@@ -94,4 +93,4 @@ router.post('/evacuation', async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

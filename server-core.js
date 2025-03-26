@@ -27,14 +27,24 @@ module.exports = function(app, server) {
   
   console.log('Loading route modules...');
   
+  // Try loading each route module separately with error handling
+  let aiRoutes, alertRoutes, mapRoutes; // etc.
+
+  try {
+    console.log('Loading AI routes...');
+    aiRoutes = require('./routes/aiRoutes');
+  } catch (error) {
+    console.error('Failed to load AI routes:', error.message);
+    // Provide a simple fallback route
+    aiRoutes = express.Router();
+    aiRoutes.get('/*', (req, res) => res.status(503).json({error: 'AI service unavailable'}));
+  }
+
   // Import Routes
-  const aiRoutes = require('./routes/aiRoutes');
-  const alertRoutes = require('./routes/alertRoutes');
   const disasterRoutes = require('./routes/disasterRoutes');
   const emergencyRoutes = require('./routes/emergencyRoutes');
   const evacuationRoutes = require('./routes/evacuationRoutes');
   const geminiRoutes = require('./routes/geminiRoutes');
-  const mapRoutes = require('./routes/mapRoutes');
   const predictionRoutes = require('./routes/predictionRoutes');
   const pushNotificationRoutes = require('./routes/pushNotificationAPI');
   const routeRoutes = require('./routes/routeRoutes');
