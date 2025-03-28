@@ -1,0 +1,53 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: safeescape
+  SERVICE_NAME: safescape-backend
+  REGION: asia-south1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Authorize Docker push
+        run: gcloud auth configure-docker
+
+      - name: Build and push container
+        run: |
+          docker build -t gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .
+          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        run: |
+          echo "Deploying to Cloud Run with environment variables and secrets..."
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --update-secrets=FIREBASE_CREDENTIALS=firebase-credentials:latest,VERTEXAI_CREDENTIALS=vertexai-credentials:latest,PUBSUB_CREDENTIALS=pubsub-credentials:latest,GEMINI_CREDENTIALS=gemini-credentials:latest \
+            --set-env-vars="GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }},OPENWEATHER_API_KEY=${{ secrets.OPENWEATHER_API_KEY }},GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }},GEMINI_PROJECT_ID=${{ secrets.GEMINI_PROJECT_ID }},GEMINI_CLIENT_EMAIL=${{ secrets.GEMINI_CLIENT_EMAIL }},GOOGLE_CLOUD_PROJECT_ID=${{ env.PROJECT_ID }},VERTEX_AI_LOCATION=${{ secrets.VERTEX_AI_LOCATION }},JWT_SECRET=${{ secrets.JWT_SECRET }}"
+
+      - name: Check deployment status
+        if: ${{ always() }}
+        run: |
+          echo "Checking recent logs for errors..."
+          gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=${{ env.SERVICE_NAME }} AND severity>=ERROR" --limit=5 || echo "No recent error logs found"
