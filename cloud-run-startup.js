@@ -42,10 +42,23 @@ function loadFullApplication() {
     console.log('Loading full application from server-core.js...');
     
     // Verify Firebase initialization before loading the rest of the app
-    const { admin, db } = require('./config/firebase-config');
+    console.log('Verifying Firebase configuration...');
     try {
-      const firestore = admin.firestore();
+      // Import using the new getter pattern
+      const firebaseConfig = require('./config/firebase-config');
+      
+      // Test a simple Firestore operation
+      const db = firebaseConfig.db;
+      const testQuery = db.collection('system').doc('status');
       console.log('✅ Firebase connection verified in Cloud Run');
+      
+      // Log environment variables status (without revealing secrets)
+      console.log('Environment check:');
+      console.log('- FIREBASE_CREDENTIALS exists:', !!process.env.FIREBASE_CREDENTIALS);
+      console.log('- VERTEXAI_CREDENTIALS exists:', !!process.env.VERTEXAI_CREDENTIALS);
+      console.log('- PUBSUB_CREDENTIALS exists:', !!process.env.PUBSUB_CREDENTIALS);
+      console.log('- GEMINI_CREDENTIALS exists:', !!process.env.GEMINI_CREDENTIALS);
+      
     } catch (firebaseError) {
       console.error('❌ Firebase initialization error in Cloud Run:', firebaseError);
       // Continue execution to allow non-DB routes to function

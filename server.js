@@ -34,6 +34,7 @@ if (isCloudRun) {
   const routeRoutes = require('./routes/routeRoutes');
   const safeZoneRoutes = require('./routes/safeZoneRoutes');
   const userRoutes = require('./routes/userRoutes');
+  const diagnosticRoutes = require('./routes/diagnosticRoutes');
   
   // Service imports
   const socketService = require('./services/socket/socketService');
@@ -237,6 +238,7 @@ if (isCloudRun) {
   app.use('/api/routes', routeRoutes);
   app.use('/api/safe-zones', safeZoneRoutes);
   app.use('/api/users', userRoutes);
+  app.use('/api/diagnostic', diagnosticRoutes);
   
   // Error handling middleware
   app.use((err, req, res, next) => {

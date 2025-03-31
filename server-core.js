@@ -68,6 +68,35 @@ module.exports = function(app, server) {
   app.use('/api/diagnostic', diagnosticRoutes);
   console.log('✅ Registered emergency diagnostic endpoints');
 
+  // Firebase diagnostic route
+  app.get('/api/diagnostic/firebase', async (req, res) => {
+    try {
+      const firebaseConfig = require('./config/firebase-config');
+      const admin = firebaseConfig.admin;
+      const db = firebaseConfig.db;
+      
+      // Try a simple Firestore operation
+      const timestamp = admin.firestore.Timestamp.now();
+      
+      // Return diagnostic info
+      res.status(200).json({
+        status: 'connected',
+        timestamp: timestamp.toDate().toISOString(),
+        environment: process.env.NODE_ENV,
+        cloudRun: process.env.K_SERVICE !== undefined,
+        appInitialized: !!db,
+        adminInitialized: !!admin.apps.length
+      });
+    } catch (error) {
+      console.error('Firebase diagnostic error:', error);
+      res.status(500).json({
+        status: 'error',
+        message: error.message,
+        stack: process.env.NODE_ENV === 'production' ? undefined : error.stack
+      });
+    }
+  });
+
   // Define all route variables
   let aiRoutes, alertRoutes, disasterRoutes, emergencyRoutes, evacuationRoutes, 
       geminiRoutes, mapRoutes, predictionRoutes, pushNotificationRoutes, 

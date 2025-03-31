@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const firebaseConfig = require('../config/firebase-config');
 
 router.get('/test', (req, res) => {
   res.json({ message: 'Diagnostic test route works!' });
@@ -23,23 +24,6 @@ router.get('/ping', (req, res) => {
   });
 });
 
-// Test database connection if applicable
-router.get('/db-status', async (req, res) => {
-  try {
-    // You can add your database connection check here if needed
-    res.json({ 
-      status: 'success', 
-      message: 'Database connection route reached',
-      // Add your database status check here
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      status: 'error', 
-      message: 'Database connection failed',
-      error: error.message
-    });
-  }
-});
 
 // Echo endpoint - returns whatever was sent
 router.post('/echo', (req, res) => {
@@ -87,6 +71,34 @@ router.get('/routes', (req, res) => {
     routes: routes,
     count: routes.length
   });
+});
+
+// GET Firebase connection status
+router.get('/firebase', async (req, res) => {
+    try {
+        const connectionStatus = await firebaseConfig.testConnection();
+        
+        if (connectionStatus.connected) {
+            return res.status(200).json({
+                success: true,
+                message: 'Firebase connection successful',
+                ...connectionStatus
+            });
+        } else {
+            return res.status(503).json({
+                success: false,
+                message: 'Firebase connection failed',
+                ...connectionStatus
+            });
+        }
+    } catch (error) {
+        console.error('Error in Firebase diagnostic route:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error checking Firebase connection',
+            error: error.message
+        });
+    }
 });
 
 module.exports = router;
