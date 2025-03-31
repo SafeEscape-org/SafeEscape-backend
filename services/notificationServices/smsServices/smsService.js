@@ -1,13 +1,11 @@
-const twilio = require('twilio');
 const phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
-const config = require('../../../config/twillioConfig'); // ✅ Import config
 
-// Initialize Twilio client with imported config
-const client = twilio(config.accountSid, config.authToken);
-if (!config.accountSid || !config.authToken) {
-  throw new Error("🚨 Twilio credentials are missing! Check your .env file.");
-}
+// Simple mock SMS service that just logs messages
 class SMSService {
+  constructor() {
+    console.log('📱 SMS Service initialized in stub mode - messages will be logged but not sent');
+  }
+
   /**
    * Formats phone number to E.164 (global format)
    * @param {string} phone - User's phone number
@@ -26,7 +24,7 @@ class SMSService {
   }
 
   /**
-   * Sends an SMS globally with formatted phone numbers
+   * Logs SMS messages instead of sending them
    * @param {string} phone - User's phone number
    * @param {string} countryCode - Country code (e.g., "US", "IN")
    * @param {string} message - SMS message body
@@ -36,43 +34,46 @@ class SMSService {
       const formattedPhone = this.formatPhoneNumber(phone, countryCode);
       if (!formattedPhone) return { success: false, error: "Invalid phone number" };
 
-      const response = await client.messages.create({
-        body: message,
-        to: formattedPhone,
-        from: config.twilioNumber // ✅ Using config
-      });
-
-      console.log(`✅ SMS sent to ${formattedPhone}: ${response.sid}`);
-      return { success: true, response };
+      // Log the message instead of sending it
+      console.log(`📱 [SMS STUB] Would send to ${formattedPhone}: "${message}"`);
+      
+      // Return a mock success response
+      return { 
+        success: true, 
+        response: { 
+          sid: `MOCK_${Date.now()}`,
+          status: 'simulated' 
+        }
+      };
     } catch (error) {
-      console.error(`❌ Failed to send SMS to ${phone}: ${error.message}`);
+      console.error(`❌ Failed to process SMS to ${phone}: ${error.message}`);
       return { success: false, error: error.message };
     }
   }
 
   /**
-   * Sends emergency SMS alerts to multiple users globally
+   * Logs emergency alerts instead of sending them
    * @param {Object} alert - Alert details (type, description, affectedUsers)
    */
   async sendEmergencyAlerts(alert) {
     try {
       const message = `🚨 Emergency Alert: ${alert.type} - ${alert.description}`;
-      const results = await Promise.all(
-        alert.affectedUsers.map(user => this.sendSMS(user.phone, user.countryCode, message))
-      );
+      
+      console.log(`📱 [EMERGENCY SMS STUB] Would send ${alert.affectedUsers.length} alerts:`);
+      alert.affectedUsers.forEach(user => {
+        console.log(`   - To: ${user.phone} (${user.countryCode}): "${message}"`);
+      });
 
-      // Separate successes and failures
-      const successCount = results.filter(res => res.success).length;
-      const failureCount = results.length - successCount;
-
-      console.log(`✅ ${successCount} alerts sent successfully`);
-      if (failureCount > 0) {
-        console.warn(`⚠️ ${failureCount} alerts failed to send`);
-      }
-
-      return { successCount, failureCount, results };
+      return { 
+        successCount: alert.affectedUsers.length,
+        failureCount: 0,
+        results: alert.affectedUsers.map(user => ({
+          success: true,
+          response: { sid: `MOCK_${Date.now()}`, status: 'simulated' }
+        }))
+      };
     } catch (error) {
-      console.error(`❌ Failed to send emergency alerts: ${error.message}`);
+      console.error(`❌ Failed to process emergency alerts: ${error.message}`);
       throw new Error(error.message);
     }
   }

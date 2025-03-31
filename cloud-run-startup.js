@@ -40,9 +40,47 @@ app.get('/', (req, res) => {
 function loadFullApplication() {
   try {
     console.log('Loading full application from server-core.js...');
+    
+    // Verify Firebase initialization before loading the rest of the app
+    const { admin, db } = require('./config/firebase-config');
+    try {
+      const firestore = admin.firestore();
+      console.log('✅ Firebase connection verified in Cloud Run');
+    } catch (firebaseError) {
+      console.error('❌ Firebase initialization error in Cloud Run:', firebaseError);
+      // Continue execution to allow non-DB routes to function
+    }
+    
     const configureApp = require('./server-core');
     console.log('server-core.js loaded successfully, configuring app...');
     configureApp(app, server);
+    
+    // Add PubSub debugging
+    console.log('Checking PubSub services...');
+    try {
+      const pubSubService = require('./services/pubsub/pubSubService');
+      const pubSubListener = require('./services/pubsub/pubSubListener');
+      
+      // Log PubSub service status
+      console.log('PubSub service loaded, initializing...');
+      
+      // Ensure PubSub service is ready
+      if (typeof pubSubService.initialize === 'function') {
+        pubSubService.initialize().then(() => {
+          console.log('✅ PubSub service initialized successfully');
+          
+          // Initialize listener after service is ready
+          pubSubListener.initialize();
+        }).catch(err => {
+          console.error('❌ PubSub service initialization failed:', err);
+        });
+      } else {
+        console.log('PubSub service initialized');
+        pubSubListener.initialize();
+      }
+    } catch (error) {
+      console.error('❌ PubSub service loading error:', error);
+    }
     
     // Add direct test route
     app.get('/direct-test', (req, res) => {

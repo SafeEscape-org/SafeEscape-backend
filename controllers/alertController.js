@@ -1,9 +1,8 @@
 const Alert = require('../models/Alert');
 const pushNotificationService = require('../services/notificationServices/pushNotifications/pushNotification');
 const smsService = require('../services/notificationServices/smsServices/smsService');
-const alertService = require('../services/pubsub/alertService');
 const pubSubService = require('../services/pubsub/pubSubService');
-
+const alertService = require('../services/alerts/alertService');
 class AlertController {
   async createAlert(req, res) {
     try {
@@ -160,4 +159,4 @@ class AlertController {
   }
 }
 
-module.exports = new AlertController(); 
+module.exports = new AlertController();

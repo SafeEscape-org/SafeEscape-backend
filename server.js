@@ -11,13 +11,15 @@ if (isCloudRun) {
   const express = require('express');
   const cors = require('cors');
   const http = require('http');
-  // ... other imports
   const path = require('path');
   const socketIO = require('socket.io');
   const bodyParser = require('body-parser');
   const morgan = require('morgan');
   const helmet = require('helmet');
   const compression = require('compression');
+  
+  // Firebase configuration import
+  const { admin, db } = require('./config/firebase-config');
   
   // Route imports
   const aiRoutes = require('./routes/aiRoutes');
@@ -35,8 +37,8 @@ if (isCloudRun) {
   
   // Service imports
   const socketService = require('./services/socket/socketService');
-
-  const pubSubService = require('./services/pubSubService');
+  const pubSubService = require('./services/pubsub/pubSubService.js');
+  const pubSubListener = require('./services/pubsub/pubSubListener');
   
   const app = express();
   const server = http.createServer(app);
@@ -54,6 +56,19 @@ if (isCloudRun) {
   // Initialize socket service
   socketService.initialize(io);
   
+  // Initialize Firebase (verification)
+  console.log('Verifying Firebase connection...');
+  try {
+    const firestore = admin.firestore();
+    console.log('✅ Firebase connection successful');
+  } catch (error) {
+    console.error('❌ Firebase initialization error:', error.message);
+    // Continue execution - don't exit process to allow non-DB routes to function
+  }
+  
+  // Initialize pubsub listeners
+  pubSubListener.initialize();
+  
   // Add your middleware
   app.use(cors());
   app.use(express.json());
@@ -68,6 +83,22 @@ if (isCloudRun) {
   // Health check endpoint
   app.get('/health', (req, res) => {
     res.status(200).send('OK');
+  });
+
+  // Firebase status check endpoint (useful for debugging)
+  app.get('/api/status/firebase', (req, res) => {
+    try {
+      const timestamp = admin.firestore.Timestamp.now();
+      res.status(200).json({
+        status: 'connected',
+        timestamp: timestamp.toDate().toISOString()
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 'error',
+        message: error.message
+      });
+    }
   });
   
   // Root route - Landing page

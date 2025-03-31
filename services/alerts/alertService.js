@@ -1,5 +1,5 @@
 const pubSubService = require('../pubsub/pubSubService');
-const disasterPrediction = require('../vertex ai/disasterPrediction');
+const disasterPrediction = require('../vertexai/disasterPrediction');
 const firebaseAdmin = require('../firebase/firebaseAdmin');
 const { getDistance } = require('geolib');
 
