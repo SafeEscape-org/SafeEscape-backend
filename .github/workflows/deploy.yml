@@ -10,19 +10,29 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Set up Cloud SDK
-      uses: google-github-actions/setup-gcloud@v1
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v1'
       with:
-        project_id: safeescape
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
-        export_default_credentials: true
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
     
-    - name: Authorize Docker push
-      run: gcloud auth configure-docker asia-south1-docker.pkg.dev
+    - name: Set up Cloud SDK
+      uses: 'google-github-actions/setup-gcloud@v1'
+      with:
+        install_components: 'gke-gcloud-auth-plugin'
     
-    - name: Build and push
+    - name: Configure Docker for Artifact Registry
       run: |
+        gcloud --quiet auth configure-docker asia-south1-docker.pkg.dev
+        # Validate authentication
+        gcloud auth list
+        gcloud config list
+    
+    - name: Build and push Docker image
+      run: |
+        # Build the Docker image
         docker build -t asia-south1-docker.pkg.dev/safeescape/cloud-run-source-deploy/safescape-backend:${{ github.sha }} .
+        # Push the Docker image
         docker push asia-south1-docker.pkg.dev/safeescape/cloud-run-source-deploy/safescape-backend:${{ github.sha }}
       
     - name: Deploy to Cloud Run
