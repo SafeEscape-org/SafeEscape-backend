@@ -1,0 +1,4 @@
+options:
+  logging: GCS_ONLY
+  logStreamingOption: STREAM_ON
+  logsBucket: 'gs://safeescape-build-logs'
