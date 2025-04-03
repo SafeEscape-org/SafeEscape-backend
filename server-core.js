@@ -14,6 +14,25 @@ const debugMiddleware = require('./middleware/debugMiddleware');
 
 // Export the configuration function
 module.exports = function(app, server) {
+  console.log('Initializing server core...');
+  
+  // Initialize Firebase first before loading routes
+  try {
+    console.log('Initializing Firebase...');
+    const { admin, db } = require('./config/firebase-config');
+    
+    // Test Firebase connection
+    const timestamp = admin.firestore.Timestamp.now();
+    console.log('Firebase initialized successfully:', timestamp.toDate().toISOString());
+    
+    // Add to app locals for convenience
+    app.locals.db = db;
+    app.locals.admin = admin;
+  } catch (error) {
+    console.error('❌ Firebase initialization failed:', error);
+    // Continue - we'll handle services individually
+  }
+
   console.log('Configuring full server application...');
   
   // Add middleware
