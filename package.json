@@ -42,7 +42,7 @@
     "google-libphonenumber": "^3.2.40",
     "googleapis": "^148.0.0",
     "helmet": "^8.1.0",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.2",
     "memory-cache": "^0.2.0",
     "mongoose": "^8.13.2",
     "morgan": "^1.10.0",
