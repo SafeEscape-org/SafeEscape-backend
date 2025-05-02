@@ -24,7 +24,7 @@
   "dependencies": {
     "@google-cloud/bigquery": "^7.9.4",
     "@google-cloud/pubsub": "^1.7.3",
-    "@google-cloud/vertexai": "^1.9.3",
+    "@google-cloud/vertexai": "^1.10.0",
     "@google/generative-ai": "^0.24.0",
     "@googlemaps/google-maps-services-js": "^3.4.0",
     "axios": "^1.8.4",
