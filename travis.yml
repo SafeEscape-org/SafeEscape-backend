@@ -1,0 +1,30 @@
+language: node_js
+node_js:
+  - "14" # Update this if the project uses a different Node.js version
+
+# Cache dependencies to improve build speed
+cache:
+  directories:
+    - node_modules
+
+# Environment variables
+env:
+  global:
+    - NODE_ENV=test
+    - API_URL=https://safescape-backend-167333024201.asia-south1.run.app
+
+# Install dependencies
+install:
+  - npm install
+
+# Run tests
+script:
+  - npm test # Replace with the actual test command if it's different
+
+# Notifications (optional)
+notifications:
+  email:
+    recipients:
+      - aman_mogal_comp@moderncoe.edu.in 
+    on_success: change # Notify only on status change (success/failure)
+    on_failure: always # Always notify on failure
