@@ -46,7 +46,7 @@
     "memory-cache": "^0.2.0",
     "mongoose": "^8.14.1",
     "morgan": "^1.10.0",
-    "multer": "^1.4.5-lts.1",
+    "multer": "^1.4.5-lts.2",
     "node-cache": "^5.1.2",
     "nodemailer": "^6.10.0",
     "sharp": "^0.33.5",
