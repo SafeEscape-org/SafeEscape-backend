@@ -119,7 +119,7 @@ module.exports = function(app, server) {
   // Define all route variables
   let aiRoutes, alertRoutes, disasterRoutes, emergencyRoutes, evacuationRoutes, 
       geminiRoutes, mapRoutes, predictionRoutes, pushNotificationRoutes, 
-      routeRoutes, safeZoneRoutes, userRoutes;
+      routeRoutes, safeZoneRoutes, userRoutes, voiceRoutes;
 
   // Initialize each one with proper error handling
 
@@ -200,6 +200,15 @@ module.exports = function(app, server) {
     userRoutes = express.Router();
     userRoutes.get('/*', (req, res) => res.status(503).json({error: 'User service unavailable'}));
   }
+  
+  // Voice routes for speech interaction
+  try {
+    voiceRoutes = require('./routes/voiceRoutes');
+  } catch (error) {
+    console.error('Failed to load Voice routes:', error.message);
+    voiceRoutes = express.Router();
+    voiceRoutes.get('/*', (req, res) => res.status(503).json({error: 'Voice service unavailable'}));
+  }
 
   try {
     diagnosticRoutes = require('./routes/diagnosticRoutes');
@@ -247,6 +256,7 @@ module.exports = function(app, server) {
   registerRoutes(app, '/api/routes', routeRoutes, 'routeRoutes');
   registerRoutes(app, '/api/safe-zones', safeZoneRoutes, 'safeZoneRoutes');
   registerRoutes(app, '/api/users', userRoutes, 'userRoutes');
+  registerRoutes(app, '/api/voice', voiceRoutes, 'voiceRoutes');
   
   // Add a direct API test route
   app.get('/api/status', (req, res) => {
@@ -275,6 +285,15 @@ module.exports = function(app, server) {
   // Initialize socket service with the io instance
   const socketService = require('./services/socket/socketService');
   socketService.initialize(io);
+  
+  // Initialize Voice WebSocket service for streaming
+  try {
+    const voiceWebSocketService = require('./services/socket/voiceWebSocketService');
+    voiceWebSocketService.initVoiceWebSocket(server);
+    console.log('Voice WebSocket service initialized');
+  } catch (error) {
+    console.error('Failed to initialize Voice WebSocket service:', error.message);
+  }
 
   // Add socket event listeners
   io.on('connection', (socket) => {
@@ -351,7 +370,7 @@ module.exports = function(app, server) {
   // Serve static files for testing
   app.use(express.static('public'));
 
-  // Serve the test client
+  // Serve the test clients
   app.get('/test-pubsub', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/test-pubsub-client.html'));
   });
@@ -379,6 +398,9 @@ module.exports = function(app, server) {
       clientCount: io.engine.clientsCount,
       alert: testAlert
     });
+  });
+  app.get('/test-voice', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/test-voice-client.html'));
   });
 
   // Error handling middleware

@@ -258,10 +258,24 @@ if (isCloudRun) {
       message: `Route ${req.originalUrl} not found`
     });
   });
-  
-  // Start the server
+    // Start the server
   const PORT = process.env.PORT || 5000;
-  server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+  
+  // Try to start the server, fallback to alternate port if default is in use
+  const startServer = (port) => {
+    server.listen(port, '0.0.0.0')
+      .on('listening', () => {
+        console.log(`Server running on port ${port}`);
+      })
+      .on('error', (err) => {
+        if (err.code === 'EADDRINUSE' && port === PORT) {
+          console.log(`Port ${port} is in use, attempting to use port ${port + 1}`);
+          startServer(port + 1);
+        } else {
+          console.error('Server error:', err);
+        }
+      });
+  };
+  
+  startServer(PORT);
 }
