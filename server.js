@@ -20,8 +20,7 @@ if (isCloudRun) {
   
   // Firebase configuration import
   const { admin, db } = require('./config/firebase-config');
-  
-  // Route imports
+    // Route imports
   const aiRoutes = require('./routes/aiRoutes');
   const alertRoutes = require('./routes/alertRoutes');
   const disasterRoutes = require('./routes/disasterRoutes');
@@ -34,6 +33,7 @@ if (isCloudRun) {
   const routeRoutes = require('./routes/routeRoutes');
   const safeZoneRoutes = require('./routes/safeZoneRoutes');
   const userRoutes = require('./routes/userRoutes');
+  const voiceRoutes = require('./routes/voiceRoutes');
   const diagnosticRoutes = require('./routes/diagnosticRoutes');
   
   // Service imports
@@ -80,6 +80,11 @@ if (isCloudRun) {
   
   // Static files
   app.use(express.static(path.join(__dirname, 'public')));
+  
+  // Test route for voice interface
+  app.get('/test-voice', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/test-voice-client.html'));
+  });
   
   // Health check endpoint
   app.get('/health', (req, res) => {
@@ -224,8 +229,7 @@ if (isCloudRun) {
       </html>
     `);
   });
-  
-  // Register your routes
+    // Register your routes
   app.use('/api/ai', aiRoutes);
   app.use('/api/alerts', alertRoutes);
   app.use('/api/disasters', disasterRoutes);
@@ -238,6 +242,7 @@ if (isCloudRun) {
   app.use('/api/routes', routeRoutes);
   app.use('/api/safe-zones', safeZoneRoutes);
   app.use('/api/users', userRoutes);
+  app.use('/api/voice', voiceRoutes);
   app.use('/api/diagnostic', diagnosticRoutes);
   
   // Error handling middleware

@@ -13,13 +13,13 @@ const authMiddleware = require('../middleware/auth/auth');
 router.use(debugMiddleware);
 
 // Process voice input and return text response (Speech-to-Text + AI)
-router.post('/input', authMiddleware, voiceController.processVoiceInput);
+router.post('/input', voiceController.processVoiceInput);
 
 // Process voice input and return voice response (Speech-to-Text + AI + Text-to-Speech)
-router.post('/conversation', authMiddleware, voiceController.processVoiceConversation);
+router.post('/conversation', voiceController.processVoiceConversation);
 
 // Text to Speech conversion
-router.post('/tts', authMiddleware, voiceController.textToSpeech);
+router.post('/tts', voiceController.textToSpeech);
 
 // Health check endpoint
 router.get('/health', (req, res) => {

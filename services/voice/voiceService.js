@@ -86,12 +86,11 @@ async function speechToText(audioContent, options = {}) {
  * @param {Object} options - Configuration options
  * @returns {Promise<Buffer>} - Audio buffer
  */
-async function textToSpeechAudio(text, options = {}) {
-  try {
+async function textToSpeechAudio(text, options = {}) {  try {
     const defaultOptions = {
       languageCode: 'en-US',
-      ssmlGender: 'NEUTRAL',
-      voiceName: 'en-US-Neural2-F', // Using a neutral, clear voice
+      ssmlGender: 'FEMALE', 
+      voiceName: 'en-US-Neural2-F', 
       audioEncoding: 'MP3'
     };
 
