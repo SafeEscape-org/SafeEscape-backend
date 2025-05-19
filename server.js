@@ -69,14 +69,15 @@ if (isCloudRun) {
   
   // Initialize pubsub listeners
   pubSubListener.initialize();
-  
-  // Add your middleware
+    // Add your middleware
   app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true })); 
   app.use(morgan('dev')); // Request logging
   app.use(helmet({ contentSecurityPolicy: false })); // Security headers
   app.use(compression()); // Response compression
+  app.use(express.json({ limit: '50mb' })); // Increased from 10mb to 50mb for larger audio inputs
+  app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Increased payload limit for voice processing
   
   // Static files
   app.use(express.static(path.join(__dirname, 'public')));

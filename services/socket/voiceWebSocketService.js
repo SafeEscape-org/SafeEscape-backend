@@ -39,7 +39,7 @@ function handleVoiceConnection(ws, request) {
   let streamingConfig = {
     languageCode: 'en-US',
     encoding: 'LINEAR16',
-    sampleRateHertz: 16000,
+    sampleRateHertz: 48000, // Default to 48kHz as most browsers record at this rate
     interimResults: true,
     enableAutomaticPunctuation: true
   };
@@ -77,6 +77,23 @@ function handleVoiceConnection(ws, request) {
         if (!isStreaming) {
           isStreaming = true;
           logger.info('Starting voice streaming session');
+          
+          // Detect format from audio header if possible
+          if (message.length > 4) {
+            const magicBytes = message.toString('ascii', 0, 4);
+            if (magicBytes === 'WEBM' || magicBytes.includes('webm')) {
+              logger.info('Detected WebM format in audio stream');
+              streamingConfig.encoding = 'WEBM_OPUS';
+              streamingConfig.sampleRateHertz = 48000;
+            } else if (message.length > 12 && message.slice(0, 4).toString() === 'RIFF') {
+              // WAV file detection
+              logger.info('Detected WAV format in audio stream');
+              // Extract sample rate from WAV header (bytes 24-27)
+              const sampleRate = message.readUInt32LE(24);
+              streamingConfig.sampleRateHertz = sampleRate;
+              logger.info(`WAV sample rate: ${sampleRate}Hz`);
+            }
+          }
           
           // Process the streaming audio
           handleStreamingAudio(ws, audioStream, streamingConfig);
@@ -140,16 +157,20 @@ async function handleStreamingAudio(ws, audioStream, config) {
         
         // Process with Gemini AI once we have the transcription
         try {
-          const aiResponse = await geminiService.get_emergency_advice(transcription);
+          // Start a new chat session for this streaming request
+          const { sessionId, message } = await geminiService.startChat("voice_stream");
+          
+          // Send the transcribed text to get a response
+          const { response } = await geminiService.sendMessage(sessionId, transcription);
           
           ws.send(JSON.stringify({
             type: 'ai_response',
-            text: aiResponse
+            text: response
           }));
           
           // Generate speech from AI response
           try {
-            const audioResponse = await voiceService.textToSpeechAudio(aiResponse);
+            const audioResponse = await voiceService.textToSpeechAudio(response);
             
             // Send audio in chunks to handle potentially large responses
             const chunkSize = 16000; // Adjust based on your needs

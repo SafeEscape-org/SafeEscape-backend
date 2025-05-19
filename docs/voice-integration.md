@@ -31,11 +31,13 @@ POST /api/voice/input
   "audio": "base64EncodedAudioData",
   "audioConfig": {
     "languageCode": "en-US",
-    "encoding": "LINEAR16",
-    "sampleRateHertz": 16000
+    "encoding": "LINEAR16|WEBM_OPUS",
+    "sampleRateHertz": 48000
   }
 }
 ```
+
+> Note: We support both LINEAR16 (raw PCM) and WEBM_OPUS (WebM container with Opus codec) formats. 48000 Hz is the recommended sample rate when recording audio from browsers.
 
 **Response:**
 ```json
@@ -144,8 +146,12 @@ A test client is available at `/test-voice-client.html` to try out the voice fun
 ## Best Practices
 
 1. **Audio Format**: Preferred formats:
-   - For browser recording: WEBM_OPUS (48kHz)
-   - For mobile apps: FLAC or LINEAR16 (16kHz)
+   - For browser recording: WEBM_OPUS (48kHz) - Most browsers record using WebM format
+   - For Android: WEBM_OPUS (48kHz)
+   - For iOS: LINEAR16 (48kHz) - browsers on iOS may use different encoding
+   - For custom mobile apps: FLAC or LINEAR16 (16kHz or 48kHz)
+   
+   Note: The system is designed to auto-detect audio formats when possible. If you're encountering issues, you can use the diagnostic endpoint to help identify the correct encoding and sample rate.
 
 2. **Language Support**: Default is English (en-US), but the API supports multiple languages as provided by Google Cloud Speech APIs.
 
