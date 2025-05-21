@@ -34,11 +34,10 @@ module.exports = function(app, server) {
   }
 
   console.log('Configuring full server application...');
-  
-  // Add middleware
+    // Add middleware
   app.use(cors());
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json({ limit: '50mb' })); // Increased limit for large voice inputs
+  app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Increased limit for voice processing
   app.use(helmet({ contentSecurityPolicy: false }));
   app.use(compression());
   
