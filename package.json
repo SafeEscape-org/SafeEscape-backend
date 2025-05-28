@@ -43,7 +43,7 @@
     "firebase-admin": "^13.4.0",
     "geolib": "^3.3.4",
     "google-auth-library": "^9.15.1",
-    "google-libphonenumber": "^3.2.40",
+    "google-libphonenumber": "^3.2.41",
     "googleapis": "^148.0.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
