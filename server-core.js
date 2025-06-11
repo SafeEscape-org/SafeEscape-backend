@@ -249,14 +249,14 @@ module.exports = function(app, server) {
   registerRoutes(app, '/api/emergency', emergencyRoutes, 'emergencyRoutes');
   registerRoutes(app, '/api/evacuation', evacuationRoutes, 'evacuationRoutes');
   registerRoutes(app, '/api/gemini', geminiRoutes, 'geminiRoutes');
+  registerRoutes(app, '/api/voice', voiceRoutes, 'voiceRoutes');
   registerRoutes(app, '/api/maps', mapRoutes, 'mapRoutes');
   registerRoutes(app, '/api/predictions', predictionRoutes, 'predictionRoutes');
   registerRoutes(app, '/api/notifications', pushNotificationRoutes, 'pushNotificationRoutes');
   registerRoutes(app, '/api/routes', routeRoutes, 'routeRoutes');
   registerRoutes(app, '/api/safe-zones', safeZoneRoutes, 'safeZoneRoutes');
   registerRoutes(app, '/api/users', userRoutes, 'userRoutes');
-  registerRoutes(app, '/api/voice', voiceRoutes, 'voiceRoutes');
-  
+
   // Add a direct API test route
   app.get('/api/status', (req, res) => {
     res.json({

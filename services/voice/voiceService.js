@@ -10,13 +10,18 @@ const util = require('util');
 const logger = require('../../utils/logging/logger');
 const path = require('path');
 
+// Determine key file path
+const keyFilePath = process.env.GOOGLE_APPLICATION_CREDENTIALS 
+  ? process.env.GOOGLE_APPLICATION_CREDENTIALS
+  : path.resolve(__dirname, '../../config/vertexai-service-Account.json');
+
 // Create clients for Speech and Text-to-Speech
 const speechClient = new speech.SpeechClient({
-  keyFilename: path.resolve(__dirname, '../../config/vertexai-service-Account.json'),
+  keyFilename: keyFilePath,
 });
 
 const ttsClient = new textToSpeech.TextToSpeechClient({
-  keyFilename: path.resolve(__dirname, '../../config/vertexai-service-Account.json'),
+  keyFilename: keyFilePath,
 });
 
 /**
