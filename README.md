@@ -103,7 +103,7 @@ SafeEscape is a comprehensive emergency management platform designed to provide 
 
 **Clone the repository**
 ```bash
-git clone https://github.com/amanmogal/SafeEscape-backend.git
+git clone https://github.com/SafeEscape-org/SafeEscape-backend.git
 cd SafeEscape-backend
 ```
 
