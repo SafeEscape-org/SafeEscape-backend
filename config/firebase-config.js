@@ -21,11 +21,22 @@ const initializeFirebase = () => {
                 // Parse credentials from environment variable with better error handling
                 let serviceAccount;
                 try {
+                    // Validate that the credentials string is not empty
+                    if (!process.env.FIREBASE_CREDENTIALS.trim()) {
+                        throw new Error('FIREBASE_CREDENTIALS is empty');
+                    }
+                    
                     serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
+                    
+                    // Validate that required fields are present
+                    if (!serviceAccount.project_id || !serviceAccount.private_key || !serviceAccount.client_email) {
+                        throw new Error('Firebase credentials missing required fields');
+                    }
+                    
                     console.log('Successfully parsed Firebase credentials from environment variable');
                 } catch (parseError) {
-                    console.error('❌ Failed to parse FIREBASE_CREDENTIALS JSON:', parseError);
-                    throw new Error('Invalid Firebase credentials format. Must be valid JSON.');
+                    console.error('❌ Failed to parse FIREBASE_CREDENTIALS JSON:', parseError.message);
+                    throw new Error('Invalid Firebase credentials format. Must be valid JSON with required fields.');
                 }
                 
                 // Initialize Firebase with environment credentials

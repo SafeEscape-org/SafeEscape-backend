@@ -27,14 +27,10 @@ const SAFETY_PROMPT = `You are an emergency medical assistant. Analyze the image
 4. When to seek professional help
 Include relevant emergency alerts from the area if available.`;
 
-// Setup multer for image upload handling
-const upload = multer({
-    limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB limit
-    }
-});
+// Import secure file upload middleware
+const { imageUpload, handleUploadError, validateFileBuffer } = require('../middleware/security/fileUpload');
 
-app.post('/analyze-image', upload.single('image'), async (req, res) => {
+app.post('/analyze-image', imageUpload.single('image'), handleUploadError, validateFileBuffer, async (req, res) => {
     try {
         // Process image with sharp
         const imageBuffer = await sharp(req.file.buffer)
