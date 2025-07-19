@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const upload = multer({ limits: { fileSize: 10 * 1024 * 1024 } });
+const { imageUpload, handleUploadError, validateFileBuffer } = require('../middleware/security/fileUpload');
+const { uploadLimiter } = require('../middleware/security/rateLimiter');
 
 const evacuationOptimizer = require('../services/vertexai/evacuationOptimizer');
 const emergencyChatbot = require('../services/vertexai/emergencyChatbot');

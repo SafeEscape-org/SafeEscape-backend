@@ -18,6 +18,21 @@ if (isCloudRun) {
   const helmet = require('helmet');
   const compression = require('compression');
   
+  // Security middleware imports
+  const { validateEnvironment } = require('./middleware/security/envValidator');
+  const { getCorsOptions } = require('./middleware/security/corsConfig');
+  const { generalLimiter, voiceLimiter, emergencyLimiter } = require('./middleware/security/rateLimiter');
+  const { validateInput } = require('./middleware/security/inputValidator');
+  const { secureErrorHandler, notFoundHandler } = require('./middleware/security/errorHandler');
+  
+  // Validate environment variables on startup
+  try {
+    validateEnvironment();
+  } catch (error) {
+    console.error('❌ Environment validation failed:', error.message);
+    process.exit(1);
+  }
+  
   // Firebase configuration import
   const { admin, db } = require('./config/firebase-config');
     // Route imports
@@ -70,14 +85,21 @@ if (isCloudRun) {
   // Initialize pubsub listeners
   pubSubListener.initialize();
     // Add your middleware
-  app.use(cors());
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true })); 
-  app.use(morgan('dev')); // Request logging
-  app.use(helmet({ contentSecurityPolicy: false })); // Security headers
+  app.use(cors(getCorsOptions()));
+  app.use(helmet({ 
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false // Allow embedding for development
+  })); // Security headers
   app.use(compression()); // Response compression
   app.use(express.json({ limit: '50mb' })); // Increased from 10mb to 50mb for larger audio inputs
   app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Increased payload limit for voice processing
+  app.use(morgan('combined')); // Request logging
+  
+  // Apply rate limiting
+  app.use(generalLimiter);
+  
+  // Apply input validation
+  app.use(validateInput);
   
   // Static files
   app.use(express.static(path.join(__dirname, 'public')));
@@ -243,27 +265,19 @@ if (isCloudRun) {
   app.use('/api/routes', routeRoutes);
   app.use('/api/safe-zones', safeZoneRoutes);
   app.use('/api/users', userRoutes);
-  app.use('/api/voice', voiceRoutes);
+  app.use('/api/voice', voiceLimiter, voiceRoutes);
   app.use('/api/diagnostic', diagnosticRoutes);
   
+  // Emergency endpoints with less restrictive rate limiting
+  app.use('/api/alerts', emergencyLimiter, alertRoutes);
+  app.use('/api/disasters', emergencyLimiter, disasterRoutes);
+  app.use('/api/emergencies', emergencyLimiter, emergencyRoutes);
+  
   // Error handling middleware
-  app.use((err, req, res, next) => {
-    console.error('Server error:', err);
-    res.status(500).json({
-      success: false,
-      error: 'Server error',
-      message: process.env.NODE_ENV === 'production' ? 'Something went wrong' : err.message
-    });
-  });
+  app.use(secureErrorHandler);
   
   // 404 handler
-  app.use((req, res) => {
-    res.status(404).json({
-      success: false,
-      error: 'Not found',
-      message: `Route ${req.originalUrl} not found`
-    });
-  });
+  app.use(notFoundHandler);
     // Start the server
   const PORT = process.env.PORT || 5000;
   
