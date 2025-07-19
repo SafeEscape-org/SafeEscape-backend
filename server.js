@@ -20,21 +20,7 @@ if (isCloudRun) {
   
   // Firebase configuration import
   const { admin, db } = require('./config/firebase-config');
-    // Route imports
-  const aiRoutes = require('./routes/aiRoutes');
-  const alertRoutes = require('./routes/alertRoutes');
-  const disasterRoutes = require('./routes/disasterRoutes');
-  const emergencyRoutes = require('./routes/emergencyRoutes');
-  const evacuationRoutes = require('./routes/evacuationRoutes');
-  const geminiRoutes = require('./routes/geminiRoutes');
-  const mapRoutes = require('./routes/mapRoutes');
-  const predictionRoutes = require('./routes/predictionRoutes');
-  const pushNotificationRoutes = require('./routes/pushNotificationAPI');
-  const routeRoutes = require('./routes/routeRoutes');
-  const safeZoneRoutes = require('./routes/safeZoneRoutes');
-  const userRoutes = require('./routes/userRoutes');
-  const voiceRoutes = require('./routes/voiceRoutes');
-  const diagnosticRoutes = require('./routes/diagnosticRoutes');
+    // Route imports are handled by server-core.js to ensure consistent configuration
   
   // Service imports
   const socketService = require('./services/socket/socketService');
@@ -69,15 +55,8 @@ if (isCloudRun) {
   
   // Initialize pubsub listeners
   pubSubListener.initialize();
-    // Add your middleware
-  app.use(cors());
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true })); 
+    // Add logging middleware (server-core.js will handle other middleware)
   app.use(morgan('dev')); // Request logging
-  app.use(helmet({ contentSecurityPolicy: false })); // Security headers
-  app.use(compression()); // Response compression
-  app.use(express.json({ limit: '50mb' })); // Increased from 10mb to 50mb for larger audio inputs
-  app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Increased payload limit for voice processing
   
   // Static files
   app.use(express.static(path.join(__dirname, 'public')));
@@ -230,21 +209,12 @@ if (isCloudRun) {
       </html>
     `);
   });
-    // Register your routes
-  app.use('/api/ai', aiRoutes);
-  app.use('/api/alerts', alertRoutes);
-  app.use('/api/disasters', disasterRoutes);
-  app.use('/api/emergency', emergencyRoutes);
-  app.use('/api/evacuation', evacuationRoutes);
-  app.use('/api/gemini', geminiRoutes);
-  app.use('/api/maps', mapRoutes);
-  app.use('/api/predictions', predictionRoutes);
-  app.use('/api/notifications', pushNotificationRoutes);
-  app.use('/api/routes', routeRoutes);
-  app.use('/api/safe-zones', safeZoneRoutes);
-  app.use('/api/users', userRoutes);
-  app.use('/api/voice', voiceRoutes);
-  app.use('/api/diagnostic', diagnosticRoutes);
+    // Load server-core configuration to ensure consistent route registration
+  // and proper middleware application (including rate limiting)
+  console.log('Loading server-core configuration...');
+  const configureApp = require('./server-core');
+  configureApp(app, server);
+  console.log('Server-core configuration loaded successfully');
   
   // Error handling middleware
   app.use((err, req, res, next) => {

@@ -5,12 +5,47 @@ const path = require('path');
 const socketIO = require('socket.io');
 const helmet = require('helmet');
 const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 
 // Load environment variables
 dotenv.config();
 
 // Import debug middleware
 const debugMiddleware = require('./middleware/debugMiddleware');
+
+// Rate limiters for different endpoints
+const emergencyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs for emergency endpoints
+  message: {
+    error: 'Too many emergency requests from this IP, please try again later.',
+    retryAfter: 15 * 60 // 15 minutes in seconds
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const alertLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // Limit each IP to 200 requests per windowMs for alert endpoints
+  message: {
+    error: 'Too many alert requests from this IP, please try again later.',
+    retryAfter: 15 * 60
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const disasterLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 150, // Limit each IP to 150 requests per windowMs for disaster endpoints
+  message: {
+    error: 'Too many disaster requests from this IP, please try again later.',
+    retryAfter: 15 * 60
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Export the configuration function
 module.exports = function(app, server) {
@@ -210,6 +245,30 @@ module.exports = function(app, server) {
   }
 
   try {
+    pushNotificationRoutes = require('./routes/pushNotificationAPI');
+  } catch (error) {
+    console.error('Failed to load Push Notification routes:', error.message);
+    pushNotificationRoutes = express.Router();
+    pushNotificationRoutes.get('/*', (req, res) => res.status(503).json({error: 'Push Notification service unavailable'}));
+  }
+
+  try {
+    routeRoutes = require('./routes/routeRoutes');
+  } catch (error) {
+    console.error('Failed to load Route routes:', error.message);
+    routeRoutes = express.Router();
+    routeRoutes.get('/*', (req, res) => res.status(503).json({error: 'Route service unavailable'}));
+  }
+
+  try {
+    safeZoneRoutes = require('./routes/safeZoneRoutes');
+  } catch (error) {
+    console.error('Failed to load Safe Zone routes:', error.message);
+    safeZoneRoutes = express.Router();
+    safeZoneRoutes.get('/*', (req, res) => res.status(503).json({error: 'Safe Zone service unavailable'}));
+  }
+
+  try {
     diagnosticRoutes = require('./routes/diagnosticRoutes');
   } catch (error) {
     console.error('Failed to load Diagnostic routes:', error.message);
@@ -220,11 +279,22 @@ module.exports = function(app, server) {
   console.log('Registering API routes...');
   
   // Safe route registration function
-  function registerRoutes(app, path, router, name) {
+  function registerRoutes(app, path, middleware, name) {
     try {
-      if (router && typeof router === 'function') {
+      if (Array.isArray(middleware)) {
+        // Handle array of middleware (e.g., [rateLimiter, router])
+        const router = middleware[middleware.length - 1]; // Last item should be the router
+        if (router && typeof router === 'function') {
+          console.log(`Registering ${path} routes with middleware`);
+          app.use(path, ...middleware);
+          return true;
+        } else {
+          console.error(`⚠️ ${name || path} - last middleware is not a valid router`);
+          return false;
+        }
+      } else if (middleware && typeof middleware === 'function') {
         console.log(`Registering ${path} routes`);
-        app.use(path, router);
+        app.use(path, middleware);
         return true;
       } else {
         console.error(`⚠️ ${name || path} is not a valid router`);
@@ -244,9 +314,9 @@ module.exports = function(app, server) {
   app.use('/api/ai', aiRoutes);
   
   console.log('Loading alertRoutes...');
-  registerRoutes(app, '/api/alerts', alertRoutes, 'alertRoutes');
-  registerRoutes(app, '/api/disasters', disasterRoutes, 'disasterRoutes');
-  registerRoutes(app, '/api/emergency', emergencyRoutes, 'emergencyRoutes');
+  registerRoutes(app, '/api/alerts', [alertLimiter, alertRoutes], 'alertRoutes');
+  registerRoutes(app, '/api/disasters', [disasterLimiter, disasterRoutes], 'disasterRoutes');
+  registerRoutes(app, '/api/emergency', [emergencyLimiter, emergencyRoutes], 'emergencyRoutes');
   registerRoutes(app, '/api/evacuation', evacuationRoutes, 'evacuationRoutes');
   registerRoutes(app, '/api/gemini', geminiRoutes, 'geminiRoutes');
   registerRoutes(app, '/api/voice', voiceRoutes, 'voiceRoutes');
