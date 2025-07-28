@@ -7,22 +7,23 @@ const express = require('express');
 const router = express.Router();
 const voiceController = require('../controllers/voiceController');
 const debugMiddleware = require('../middleware/debugMiddleware');
-const authMiddleware = require('../middleware/auth/auth');
+const { authMiddleware, optionalAuthMiddleware } = require('../middleware/auth/auth');
+const { validateVoiceInput } = require('../middleware/security/inputValidator');
 
 // Apply debug middleware if needed
 router.use(debugMiddleware);
 
 // Process voice input and return text response (Speech-to-Text + AI)
-router.post('/input', voiceController.processVoiceInput);
+router.post('/input', validateVoiceInput, voiceController.processVoiceInput);
 
 // Process voice input and return voice response (Speech-to-Text + AI + Text-to-Speech)
-router.post('/conversation', voiceController.processVoiceConversation);
+router.post('/conversation', validateVoiceInput, voiceController.processVoiceConversation);
 
 // Text to Speech conversion
 router.post('/tts', voiceController.textToSpeech);
 
 // Diagnose speech input and provide feedback
-router.post('/diagnose', voiceController.diagnoseSpeechInput);
+router.post('/diagnose', validateVoiceInput, voiceController.diagnoseSpeechInput);
 
 // Health check endpoint
 router.get('/health', (req, res) => {
