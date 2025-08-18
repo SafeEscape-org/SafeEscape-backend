@@ -24,7 +24,7 @@
   "description": "1. **Real-Time Alerts**\r    - Integrates with IMD (Indian Meteorological Department) and NDMA (National Disaster Management Authority) APIs for earthquake, cyclone, flood, and extreme weather alerts.\r    - Push notifications in multiple languages (Hindi, English, regional languages).",
   "dependencies": {
     "@google-cloud/bigquery": "^8.1.0",
-    "@google-cloud/pubsub": "^5.0.0",
+    "@google-cloud/pubsub": "^5.2.0",
     "@google-cloud/speech": "^7.1.0",
     "@google-cloud/text-to-speech": "^6.1.0",
     "@google-cloud/vertexai": "^1.10.0",
